@@ -85,10 +85,10 @@ if __name__ == "__main__":
         if val == "n":
             break
 
-    print("lettura delle capabilities da file JSON ed esecuzione app...")
+    print("lettura delle capabilities da file JSON ed avvio app...")
     appiumDriver = defineCaps()
+    print("...avvio completato")
     # TODO: eseguire strace in parallelo
-    # TODO: impedire a strace di aprire una nuova istanza dell'app (vedere funzionamento attach() e spawn() frida)
     strace.main(appName)
     print("## esecuzione del test ##")
     findElements(appiumDriver)

@@ -10,7 +10,7 @@ function isThreadFollowed(tid) {
 
 function FollowThread(tid) {
   ThreadsFollowed[tid] = true;
-//  console.log("[+] Following thread " + tid);
+  console.log("[+] Following thread " + tid);
   Stalker.follow(tid, {
     transform: function (iterator) {
       const instruction = iterator.next();

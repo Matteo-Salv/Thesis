@@ -1,6 +1,5 @@
 import datetime
 import os
-
 import frida
 import sys
 
@@ -12,7 +11,6 @@ syscalls = {syscall[0]:syscall[1] for syscall in syscalls}
 
 
 def on_message(message, _):
-    # print(message)
     # message[] viene utilizzato per leggere la stringa json inviata dalla funzione send in JS.
     thread_id, syscall_number = message["payload"].split(":")
     syscall_number = str(abs(int(syscall_number)))
@@ -28,17 +26,16 @@ def on_detached():
 
 
 def main(target: str) -> None:
-
     device = frida.get_usb_device()
     apps = device.enumerate_applications()
+    pid = None
     for app in apps:
         if target == app.identifier or target == app.name:
-            app_identifier: str = app.identifier
-            break
+            pid = app.pid
 
-    pid = device.spawn([app_identifier])
     session = device.attach(pid)
     session.on('detached', on_detached)
+    print(f"attach al processo {target} con PID {str(pid)} effettuato con successo")
 
     with open(os.getcwd() + "/iOS_strace/tracer.js", "r") as f:
         tracer_source = f.read()
