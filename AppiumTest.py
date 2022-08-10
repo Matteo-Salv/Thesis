@@ -6,9 +6,35 @@ from appium.webdriver.common.appiumby import AppiumBy
 import xml.etree.ElementTree as eT
 import random
 import time
-import iOS_strace.main as strace
+import iOS_strace.strace as strace
+from multiprocessing import Process, Value
 
-appName = ""
+
+def findElements(desired_caps, v):
+    print("modulo findElements avviato con successo")
+    appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desired_caps)
+    v.value = 1
+    accessibleElements = list()
+    while True:
+        root = eT.fromstring(appiumDriver.page_source)
+        for element in root.iter():
+            if element.get('accessible') == 'true' and element.get('name') != 'none':
+                accessibleElements.append(element.get('name'))
+                # print(element.get('name'))
+
+        # print("tutti gli elementi interagibili della view attuale trovati.")
+        # print("scelta randomica dell'elemento da cliccare...")
+        i = random.randint(0, len(accessibleElements) - 1)
+        print("interagisco con " + accessibleElements[i])
+        interactedElement = appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i])
+        interactedElement[0].click()
+        time.sleep(3)
+        if appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i]) != 0:
+            print(".click() non ha funzionato, torno indietro")
+            appiumDriver.back()
+
+        accessibleElements.clear()
+        print("==== INTERAZIONE COMPLETATA ====")
 
 
 def defineCaps():
@@ -24,10 +50,8 @@ def defineCaps():
         app=data["app"],
         wdaLaunchTimeout="120000"
     )
-    global appName
-    appName = data["appName"]
 
-    return webdriver.Remote('http://0.0.0.0:4723/wd/hub', desired_caps)
+    return desired_caps, data["appName"]
 
 
 def resignWDA():
@@ -49,32 +73,7 @@ def resignWDA():
     print("test e resigning completato!")
 
 
-def findElements(appiumDriver):
-    accessibleElements = list()
-    while True:
-        root = eT.fromstring(appiumDriver.page_source)
-        for element in root.iter():
-            if element.get('accessible') == 'true' and element.get('name') != 'none':
-                accessibleElements.append(element.get('name'))
-                print(element.get('name'))
-
-        print("tutti gli elementi interagibili della view attuale trovati.")
-        print("scelta randomica dell'elemento da cliccare...")
-        i = random.randint(0, len(accessibleElements)-1)
-        print("interagisco con " + accessibleElements[i])
-        interactedElement = appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i])
-        interactedElement[0].click()
-        # TODO: inventare un modo per verificare che la view è cambiata, questo if non funziona
-        if appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i]) != 0:
-            print(".click() non ha funzionato, torno indietro")
-            appiumDriver.back()
-
-        accessibleElements.clear()
-        print("==== INTERAZIONE COMPLETATA ====")
-
-
-if __name__ == "__main__":
-    driver = None
+if __name__ == '__main__':
     print("Test eseguibile solo su dispositivi fisici")
     while True:
         val = input("Effettuare il resigning di WebDriverAgent? (y/n) (necessario dopo una settimana)")
@@ -86,10 +85,17 @@ if __name__ == "__main__":
             break
 
     print("lettura delle capabilities da file JSON ed avvio app...")
-    appiumDriver = defineCaps()
-    print("...avvio completato")
-    # TODO: eseguire strace in parallelo
-    strace.main(appName)
+    desiredCaps, appName = defineCaps()
+    print("...avvio completato! Esecuzione dei moduli...")
     print("## esecuzione del test ##")
-    findElements(appiumDriver)
+    v = Value('i', 0)
+    findElementsProcess = Process(target=findElements, args=(desiredCaps, v,))
+    findElementsProcess.start()
+    straceProcess = Process(target=strace.main, args=(appName,))
+    while True:
+        if v.value == 1:
+            straceProcess.start()
+            break
+    findElementsProcess.join()
+    straceProcess.join()
     print("## test terminato ##")

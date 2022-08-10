@@ -26,10 +26,12 @@ def on_detached():
 
 
 def main(target: str) -> None:
+    print("modulo strace avviato con successo")
     device = frida.get_usb_device()
     apps = device.enumerate_applications()
     pid = None
     for app in apps:
+        # print(app.identifier)
         if target == app.identifier or target == app.name:
             pid = app.pid
 
