@@ -3,7 +3,7 @@ import os
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
-import xml.etree.ElementTree as eT
+from lxml import etree as eT
 import random
 import time
 import iOS_strace.strace as strace
@@ -11,24 +11,25 @@ from multiprocessing import Process, Value
 
 
 def findElements(desired_caps, v):
-    print("modulo findElements avviato con successo")
+    print("modulo Appium avviato con successo")
     appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desired_caps)
     v.value = 1
     accessibleElements = list()
     while True:
-        root = eT.fromstring(appiumDriver.page_source)
+        root: eT._Element = eT.XML(appiumDriver.page_source.encode())
+        if statusBar := root.find(".//XCUIElementTypeStatusBar"):
+            statusBar.getparent().remove(statusBar)
         for element in root.iter():
-            if element.get('accessible') == 'true' and element.get('name') != 'none':
+            if element.get('accessible') == 'true' and element.get('name') != 'None':
                 accessibleElements.append(element.get('name'))
                 # print(element.get('name'))
 
-        # print("tutti gli elementi interagibili della view attuale trovati.")
-        # print("scelta randomica dell'elemento da cliccare...")
+        print("scelta randomica dell'elemento da cliccare...")
         i = random.randint(0, len(accessibleElements) - 1)
-        print("interagisco con " + accessibleElements[i])
+        print("interagisco con " + str(accessibleElements[i]))
         interactedElement = appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i])
         interactedElement[0].click()
-        time.sleep(3)
+        time.sleep(5)
         if appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i]) != 0:
             print(".click() non ha funzionato, torno indietro")
             appiumDriver.back()

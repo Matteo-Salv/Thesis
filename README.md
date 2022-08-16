@@ -1,7 +1,9 @@
 # Thesis
 ## Prerequisiti
-* Sistema Operativo macOS
+* Sistema Operativo macOS 
+  * Python 3.8+
   * Frida (pip install frida)
+  * lxml (pip install lxml)
   * frida-tools (pip install frida-tools)
   * [Appium Desktop](https://github.com/appium/appium-desktop/releases)
   * xCode per la configurazione di WDA incluso in Appium Desktop: vedere il capitolo "[full manual configuration di questa guida](https://appium.io/docs/en/drivers/ios-xcuitest-real-devices/)"
