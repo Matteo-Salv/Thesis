@@ -1,6 +1,5 @@
 import json
 import os
-
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from lxml import etree as eT
@@ -13,6 +12,7 @@ from multiprocessing import Process, Value
 def findElements(desired_caps, v):
     print("modulo Appium avviato con successo")
     appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desired_caps)
+    print("[Appium]: app avviata con successo")
     v.value = 1
     accessibleElements = list()
     while True:
@@ -24,9 +24,8 @@ def findElements(desired_caps, v):
                 accessibleElements.append(element.get('name'))
                 # print(element.get('name'))
 
-        print("scelta randomica dell'elemento da cliccare...")
         i = random.randint(0, len(accessibleElements) - 1)
-        print("interagisco con " + str(accessibleElements[i]))
+        print(f"interagisco con '{str(accessibleElements[i])}' ")
         interactedElement = appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i])
         interactedElement[0].click()
         time.sleep(5)
@@ -51,11 +50,12 @@ def defineCaps():
         app=data["app"],
         wdaLaunchTimeout="120000"
     )
+    udid = data["udid"]
 
-    return desired_caps, data["appName"]
+    return desired_caps, data["appName"], data["udid"]
 
 
-def resignWDA():
+def resignWDA(udid):
     print(
         "durante l'installazione di WebDriverAgent spostarsi su impostazioni > generali > gestione profili e dispositivo"
         " ed autorizzare il profilo 'Apple Development'")
@@ -68,26 +68,26 @@ def resignWDA():
               "-quiet "
               "-project WebDriverAgent.xcodeproj "
               "-scheme WebDriverAgentRunner "
-              "-destination 'id=c5b7903056d30974db4cc14eb07617196735dc75' "
-              "-allowProvisioningUpdates test")
+              f"-destination 'id={udid}' "
+              "-allowProvisioningUpdates")
     os.chdir(currentDir)
-    print("test e resigning completato!")
 
 
 if __name__ == '__main__':
-    print("Test eseguibile solo su dispositivi fisici")
+    print("lettura delle capabilities da file JSON...")
+    desiredCaps, appName, udid = defineCaps()
+    print("...lettura completata")
     while True:
         val = input("Effettuare il resigning di WebDriverAgent? (y/n) (necessario dopo una settimana)")
         if val == "y":
-            resignWDA()
+            print("## avvio resigning ##")
+            resignWDA(udid)
+            print("## resigning completato ##")
             break
 
         if val == "n":
             break
 
-    print("lettura delle capabilities da file JSON ed avvio app...")
-    desiredCaps, appName = defineCaps()
-    print("...avvio completato! Esecuzione dei moduli...")
     print("## esecuzione del test ##")
     v = Value('i', 0)
     findElementsProcess = Process(target=findElements, args=(desiredCaps, v,))
