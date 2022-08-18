@@ -10,7 +10,7 @@ function isThreadFollowed(tid) {
 
 function FollowThread(tid) {
   ThreadsFollowed[tid] = true;
-  console.log("[+] Following thread " + tid);
+  console.log("[Strace]: [+] Following thread " + tid);
   Stalker.follow(tid, {
     transform: function (iterator) {
       const instruction = iterator.next();
@@ -32,7 +32,7 @@ function UnfollowThread(threadId) {
     return;
   }
   delete ThreadsFollowed[threadId];
-  console.log("[+] Unfollowing thread " + threadId);
+  console.log("[Strace]: [+] Unfollowing thread " + threadId);
   Stalker.unfollow(threadId);
   Stalker.garbageCollect();
 }

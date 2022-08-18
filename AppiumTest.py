@@ -1,5 +1,6 @@
 import json
 import os
+import warnings
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from lxml import etree as eT
@@ -7,6 +8,9 @@ import random
 import time
 import iOS_strace.strace as strace
 from multiprocessing import Process, Value
+
+# necessario in quanto il metodo root.find() di lxml crea delle futurewarning
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def findElements(desired_caps, v):
@@ -17,24 +21,31 @@ def findElements(desired_caps, v):
     accessibleElements = list()
     while True:
         root: eT._Element = eT.XML(appiumDriver.page_source.encode())
-        if statusBar := root.find(".//XCUIElementTypeStatusBar"):
-            statusBar.getparent().remove(statusBar)
-        for element in root.iter():
-            if element.get('accessible') == 'true' and element.get('name') != 'None':
-                accessibleElements.append(element.get('name'))
-                # print(element.get('name'))
+        if alert := root.find(".//XCUIElementTypeAlert"):
+            print(f"[Appium]: alert rilevato: '{alert.get('name')}', aggiorno la pagina sorgente")
+            # TODO: trovare un modo per gestire gli alert non di sistema
+            appiumDriver.switch_to.alert.accept()
 
-        i = random.randint(0, len(accessibleElements) - 1)
-        print(f"interagisco con '{str(accessibleElements[i])}' ")
-        interactedElement = appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i])
-        interactedElement[0].click()
-        time.sleep(5)
-        if appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i]) != 0:
-            print(".click() non ha funzionato, torno indietro")
-            appiumDriver.back()
+        else:
+            if statusBar := root.find(".//XCUIElementTypeStatusBar"):
+                statusBar.getparent().remove(statusBar)
 
-        accessibleElements.clear()
-        print("==== INTERAZIONE COMPLETATA ====")
+            for element in root.iter():
+                if element.get('accessible') == 'true' and element.get('name') != 'None':
+                    accessibleElements.append(element.get('name'))
+                    print(element.get('name'))
+
+            i = random.randint(0, len(accessibleElements) - 1)
+            print(f"[Appium]: interagisco con '{str(accessibleElements[i])}' ")
+            interactedElement = appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i])
+            interactedElement[0].click()
+            time.sleep(5)
+            if appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i]) != 0:
+                print("[Appium]: .click() non ha funzionato, torno indietro")
+                appiumDriver.back()
+
+            accessibleElements.clear()
+            print("==== INTERAZIONE COMPLETATA ====")
 
 
 def defineCaps():
@@ -49,8 +60,8 @@ def defineCaps():
         udid=data["udid"],
         app=data["app"],
         wdaLaunchTimeout="120000"
+        # autoAcceptAlerts="true"
     )
-    udid = data["udid"]
 
     return desired_caps, data["appName"], data["udid"]
 

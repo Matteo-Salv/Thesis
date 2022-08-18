@@ -16,7 +16,7 @@ def on_message(message, _):
     syscall_number = str(abs(int(syscall_number)))
     if syscall_number in syscalls.keys():
         now = datetime.datetime.now()
-        print(f"[thread {thread_id}] {now.strftime('%H:%M:%S')}: {syscalls[syscall_number]}")
+        print(f"[Strace]: [thread {thread_id}] {now.strftime('%H:%M:%S')}: {syscalls[syscall_number]}")
 #    else:
 #        print(f"[{thread_id}]: Unknown({syscall_number})")
 
@@ -37,7 +37,7 @@ def main(target: str) -> None:
 
     session = device.attach(pid)
     session.on('detached', on_detached)
-    print(f"attach al processo {target} con PID {str(pid)} effettuato con successo")
+    print(f"[Strace]: attach al processo {target} con PID {str(pid)} effettuato con successo")
 
     with open(os.getcwd() + "/iOS_strace/tracer.js", "r") as f:
         tracer_source = f.read()
