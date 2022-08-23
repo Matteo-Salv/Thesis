@@ -34,6 +34,7 @@ def main(target: str) -> None:
         # print(app.identifier)
         if target == app.identifier or target == app.name:
             pid = app.pid
+            break
 
     session = device.attach(pid)
     session.on('detached', on_detached)
