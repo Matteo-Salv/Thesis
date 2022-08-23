@@ -71,8 +71,7 @@ def defineCaps():
         app=data["app"],
         wdaLaunchTimeout="120000"
     )
-    appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desired_caps)
-    return appiumDriver, data["appName"], data["udid"]
+    return desired_caps, data["appName"], data["udid"]
 
 
 def resignWDA(udid):
@@ -94,9 +93,10 @@ def resignWDA(udid):
 
 
 if __name__ == '__main__':
-    print("lettura delle capabilities da file JSON ed esecuzione app...")
-    appiumDriver, appName, udid = defineCaps()
-    print("...lettura completata, esecuzione app completata")
+    print("lettura delle capabilities da file JSON...")
+    desiredCaps, appName, udid = defineCaps()
+    print("...lettura completata")
+
     while True:
         val = input("Effettuare il resigning di WebDriverAgent? (y/n) (necessario dopo una settimana)")
         if val == "y":
@@ -107,6 +107,10 @@ if __name__ == '__main__':
 
         if val == "n":
             break
+
+    print("avvio app e collegamento con appium...")
+    appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desiredCaps)
+    print("...avvio completato")
 
     print("## esecuzione del test ##")
     straceProcess = Process(target=strace.main, args=(appName,))
