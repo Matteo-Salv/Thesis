@@ -1,7 +1,10 @@
+import ctypes
 import json
+import multiprocessing
 import os
 import sys
 import warnings
+
 import frida
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
@@ -17,8 +20,18 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 buttonsToAutomaticallyAccept = ['OK', 'ok', 'allow', 'Allow']
 
 
-def findElements(appiumDriver, bundleID):
+def appiumModule(desiredCaps, appName):
+
     print("modulo Appium avviato con successo")
+    print("[Appium]: connessione all'app in corso...")
+    appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desiredCaps)
+    device = frida.get_usb_device()
+    apps = device.enumerate_applications()
+    for app in apps:
+        if appName == app.name:
+            bundleID = app.identifier
+            break
+    print("[Appium]: ...connessione completata")
     accessibleElements = list()
     while True:
         root: eT._Element = eT.XML(appiumDriver.page_source.encode())
@@ -81,10 +94,10 @@ def defineCaps():
         deviceName=data["device"],
         automationName='xcuitest',
         udid=data["udid"],
-        app=data["app"],
-        wdaLaunchTimeout="120000"
+        wdaLaunchTimeout="120000",
+        noReset="true"
     )
-    return desired_caps, data["appName"], data["udid"]
+    return desired_caps, data["appName"], data["udid"], data["app"]
 
 
 def resignWDA(udid):
@@ -104,14 +117,18 @@ def resignWDA(udid):
               "-allowProvisioningUpdates")
     os.chdir(currentDir)
 
+def installApp(appDir):
+    print("installazione app...")
+    # TODO
+
 
 if __name__ == '__main__':
     print("lettura delle capabilities da file JSON...")
-    desiredCaps, appName, udid = defineCaps()
+    desiredCaps, appName, udid, app = defineCaps()
     print("...lettura completata")
 
     while True:
-        val = input("Effettuare il resigning di WebDriverAgent? (y/n) (necessario dopo una settimana)")
+        val = input("Effettuare il resigning di WebDriverAgent? (y/n)")
         if val == "y":
             print("## avvio resigning ##")
             resignWDA(udid)
@@ -121,24 +138,20 @@ if __name__ == '__main__':
         if val == "n":
             break
 
-    print("avvio app e collegamento con appium...")
-    appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desiredCaps)
-    print("...avvio completato")
+    while True:
+        val = input("Avviare l'installazione dell'app? (y/n)")
+        if val == "y":
+            print("## avvio installazione ##")
+            installApp(app)
+            print("## installazione completata ##")
+            break
 
-    # recupero PID e bundleID dell'app
-    device = frida.get_usb_device()
-    apps = device.enumerate_applications()
-    pid = None
-    bundleID = None
-    for app in apps:
-        if appName == app.name:
-            pid = app.pid
-            bundleID = app.identifier
+        if val == "n":
             break
 
     print("## esecuzione del test ##")
-    straceProcess = Process(target=strace.main, args=(pid, bundleID))
-    straceProcess.start()
-    findElements(appiumDriver, bundleID)
-    straceProcess.join()
+    appiumModuleProcess = Process(target=appiumModule, args=(desiredCaps, appName))
+    appiumModuleProcess.start()
+    strace.main(appName)
+    appiumModuleProcess.join()
     print("## test terminato ##")

@@ -25,12 +25,18 @@ def on_detached():
     sys.exit()
 
 
-def main(pid, bundleID) -> None:
-    print("modulo strace avviato con successo")
+def main(appName) -> None:
     device = frida.get_usb_device()
+    apps = device.enumerate_applications()
+    for app in apps:
+        if appName == app.name:
+            app_identifier: str = app.identifier
+            break
+
+    pid = device.spawn([app_identifier])
+    print("pid: " + str(pid))
     session = device.attach(pid)
     session.on('detached', on_detached)
-    print(f"[Strace]: attach al processo '{bundleID}' con PID {str(pid)} effettuato con successo")
 
     with open(os.getcwd() + "/iOS_strace/tracer.js", "r") as f:
         tracer_source = f.read()
