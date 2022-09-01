@@ -1,21 +1,16 @@
-import json
-import os
-import sys
-import warnings
-
 import frida
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from lxml import etree as eT
 import random
+import sys
 import time
-import iOS_strace.strace as strace
-from multiprocessing import Process
+import warnings
 
 # necessario in quanto il metodo root.find() di lxml crea delle futurewarning
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-buttonsToAutomaticallyAccept = ['OK', 'ok', 'allow', 'Allow']
+buttonsToAutomaticallyAccept = ['OK', 'ok', 'allow', 'Allow', 'Consentire']
 
 
 def appiumModule(desiredCaps, appName):
@@ -25,10 +20,17 @@ def appiumModule(desiredCaps, appName):
     appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desiredCaps)
     device = frida.get_usb_device()
     apps = device.enumerate_applications()
+    time.sleep(3)
+    bundleID = None
     for app in apps:
         if appName == app.name:
             bundleID = app.identifier
             break
+
+    if bundleID is None:
+        print(f"[Appium]: Errore! {appName} non trovata sul dispositivo! uscita...")
+        sys.exit()
+
     print("[Appium]: ...connessione completata")
     accessibleElements = list()
     while True:
@@ -80,76 +82,3 @@ def appiumModule(desiredCaps, appName):
         else:
             print("App non in esecuzione, il programma verrà chiuso!")
             sys.exit()
-
-
-def defineCaps():
-    f = open("caps.json")
-    data = json.load(f)
-
-    desired_caps = dict(
-        platformName='iOS',
-        platformVersion=data["version"],
-        deviceName=data["device"],
-        automationName='xcuitest',
-        udid=data["udid"],
-        wdaLaunchTimeout="120000",
-        noReset="true"
-    )
-    return desired_caps, data["appName"], data["udid"], data["app"]
-
-
-def resignWDA(udid):
-    print(
-        "durante l'installazione di WebDriverAgent spostarsi su impostazioni > generali > gestione profili e dispositivo"
-        " ed autorizzare il profilo 'Apple Development'")
-    time.sleep(3)
-    print("avvio test e resigning...")
-    currentDir = os.getcwd()
-    os.chdir(
-        "/Applications/Appium Server GUI.app/Contents/Resources/app/node_modules/appium/node_modules/appium-webdriveragent")
-    os.system("xcodebuild "
-              "-quiet "
-              "-project WebDriverAgent.xcodeproj "
-              "-scheme WebDriverAgentRunner "
-              f"-destination 'id={udid}' "
-              "-allowProvisioningUpdates")
-    os.chdir(currentDir)
-
-def installApp(appDir):
-    print("installazione app...")
-    # TODO
-
-
-if __name__ == '__main__':
-    print("lettura delle capabilities da file JSON...")
-    desiredCaps, appName, udid, app = defineCaps()
-    print("...lettura completata")
-
-    while True:
-        val = input("Effettuare il resigning di WebDriverAgent? (y/n)")
-        if val == "y":
-            print("## avvio resigning ##")
-            resignWDA(udid)
-            print("## resigning completato ##")
-            break
-
-        if val == "n":
-            break
-
-    while True:
-        val = input("Avviare l'installazione dell'app? (y/n)")
-        if val == "y":
-            print("## avvio installazione ##")
-            installApp(app)
-            print("## installazione completata ##")
-            break
-
-        if val == "n":
-            break
-
-    print("## esecuzione del test ##")
-    appiumModuleProcess = Process(target=appiumModule, args=(desiredCaps, appName))
-    appiumModuleProcess.start()
-    strace.main(appName)
-    appiumModuleProcess.join()
-    print("## test terminato ##")
