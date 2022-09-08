@@ -10,6 +10,7 @@ syscalls = [syscall.split(". ") for syscall in raw_syscall_list]
 syscalls = {syscall[0]:syscall[1] for syscall in syscalls}
 previousSyscall = ""
 previousThread_id = 0
+appIdentifier = ""
 
 def on_message(message, _):
     global previousSyscall
@@ -32,23 +33,31 @@ def on_detached():
     sys.exit()
 
 
-def main(appName) -> None:
-    print("modulo strace avviato con successo")
+def appConnection(appName) -> str:
+    global device
     device = frida.get_usb_device()
     apps = device.enumerate_applications()
-    appIdentifier = None
     for app in apps:
         if appName == app.name:
             appIdentifier: str = app.identifier
             break
 
     if appIdentifier is None:
-        print(f"[strace]: Errore! {appName} non trovata sul dispositivo! uscita...")
-        sys.exit()
-    pid = device.spawn([appIdentifier])
-    print(f"[strace]: pid: {pid}")
-    session = device.attach(pid)
-    session.on('detached', on_detached)
+        print(f"[strace]: Error! {appName} not found! Is it installed?")
+        return None
+    else:
+        print("Strace module successfully started")
+        global pid
+        pid = device.spawn([appIdentifier])
+        print(f"[strace]: pid: {pid}")
+        global session
+        session = device.attach(pid)
+        session.on('detached', on_detached)
+    print("App started!")
+    return appIdentifier
+
+
+def startStraceModule() -> None:
 
     with open(os.getcwd() + "/StraceModule/tracer.js", "r") as f:
         tracer_source = f.read()

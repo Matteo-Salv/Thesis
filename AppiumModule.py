@@ -14,43 +14,30 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 buttonsToAutomaticallyAccept = ['OK', 'ok', 'allow', 'Allow', 'Consentire']
 
 
-def interactWithTextField(field):
+def interactWithTextField(field, root):
     print(f"[Appium]: Interacting with a text field...")
-    touchActions.tap(field).perform()
     field.send_keys("The answer is 42")
     if appiumDriver.is_keyboard_shown():
-        if returnButton := appiumDriver.find_element(by=AppiumBy.NAME, value="Return"):
-            touchActions.tap(returnButton).perform()
-        else:
-            returnButton = appiumDriver.find_element(by=AppiumBy.NAME, value="Search")
-            touchActions.tap(returnButton).perform()
-
-def appiumModule(desiredCaps, appName):
+        keyboard = root.find(".//XCUIElementTypeKeyboard")
+        buttons = keyboard.findall('.//XCUIElementTypeButton')
+        print(f"last key name: {buttons[len(buttons)-1].get('name')}")
+        lastKeyboardButton = appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[len(buttons)-1].get('name'))
+        touchActions.tap(lastKeyboardButton).perform()
+        # TODO: il tap viene eseguito ma la view non cambia
+def startAppiumModule(desiredCaps, bundleID):
 
     print("Appium module successfully started")
-    time.sleep(3)
-    print("[Appium]: connecting to the app...")
+    print("[Appium]: connecting to the device...")
     global appiumDriver
     appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desiredCaps)
     global touchActions
     touchActions = TouchAction(appiumDriver)
-    device = frida.get_usb_device()
-    apps = device.enumerate_applications()
-    time.sleep(3)
-    bundleID = None
-    for app in apps:
-        if appName == app.name:
-            bundleID = app.identifier
-            break
-
-    if bundleID is None:
-        print(f"[Appium]: Error! {appName} not found on the device! exit...")
-        sys.exit()
-
     print("[Appium]: ...connection completed!")
-    time.sleep(3)
+    time.sleep(2)
+
     accessibleElements = list()
     previousAccessibleElements = list()
+
     while True:
         root: eT._Element = eT.XML(appiumDriver.page_source.encode())
 
@@ -62,7 +49,7 @@ def appiumModule(desiredCaps, appName):
                 print(f"[Appium]: alert found: '{alert.get('name')}'")
                 if textField := root.find(".//XCUIElementTypeTextField"):
                     field = appiumDriver.find_element(by=AppiumBy.NAME, value=textField.get('name'))
-                    interactWithTextField(field)
+                    interactWithTextField(field, root)
                 buttons = alert.findall('.//XCUIElementTypeButton')
                 alreadyClicked = False
                 for button in buttons:
@@ -83,11 +70,8 @@ def appiumModule(desiredCaps, appName):
                 if statusBar := root.find(".//XCUIElementTypeStatusBar"):
                     statusBar.getparent().remove(statusBar)
 
-                if keyboard := root.find(".//XCUIElementTypeKeyboard"):
-                    keyboard.getparent().remove(keyboard)
-
                 for element in root.iter():
-                    if element.get('accessible') == 'true' and element.get('name') != "None":
+                    if element.get('accessible') == 'true' and str(element.get('name')) != "None":
                         accessibleElements.append(element.get('name'))
                         print(f"[Appium]: '{element.get('name')}'")
 
@@ -97,14 +81,20 @@ def appiumModule(desiredCaps, appName):
                     appiumDriver.back()
                 else:
                     i = random.randint(0, len(accessibleElements) - 1)
+                    # TODO: risistemare il seguente if una volta terminato il test di TextField
                     if interactedElement := appiumDriver.find_elements(by=AppiumBy.ID,
-                                                                               value=accessibleElements[i]):
-                        print(f"[Appium]: interacting with '{interactedElement[0].text}' ")
-                        # TODO: questo controllo non funziona, verificare prima che effettivamente il tipo sia textfield
-                        if interactedElement[0].get_attribute("type") == "XCUIElementTypeTextField":
-                            interactWithTextField(accessibleElements[i])
+                                                                                value='Search'):
+                                                                               # value=accessibleElements[i]):
+                        if str(interactedElement[0].get_attribute("type")) == "XCUIElementTypeTextField":
+                            interactWithTextField(accessibleElements[i], root)
+
+                        if appiumDriver.is_keyboard_shown():
+                            textField = appiumDriver.find_element(by=AppiumBy.XPATH, value='//XCUIElementTypeTextField')
+                            interactWithTextField(textField, root)
                         # TODO: aggiungere caso in cui si ha uno slider come funzione
                         else:
+                            print(f"[Appium]: interacting with '{interactedElement[0].text}', "
+                                  f"type '{interactedElement[0].get_attribute('type')}'")
                             touchActions.tap(interactedElement[0]).perform()
 
 
@@ -119,7 +109,7 @@ def appiumModule(desiredCaps, appName):
                     accessibleElements.clear()
                     print("==== INTERACTION COMPLETED ====")
 
-                time.sleep(3)
+                time.sleep(5)
 
         elif appState == 3 or appState == 2:
             print("[Appium]: app is running in background, going back in foreground...")

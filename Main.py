@@ -76,8 +76,12 @@ if __name__ == '__main__':
             break
 
     print("## esecuzione del test ##")
-    appiumModuleProcess = Process(target=AppiumModule.appiumModule, args=(desiredCaps, appName))
-    appiumModuleProcess.start()
-    straceModule.main(appName)
-    appiumModuleProcess.join()
+    appIdentifier = straceModule.appConnection(appName)
+    if appIdentifier is not None:
+        appiumModuleProcess = Process(target=AppiumModule.startAppiumModule, args=(desiredCaps, appIdentifier))
+        appiumModuleProcess.start()
+        straceModule.startStraceModule()
+        appiumModuleProcess.join()
+    else:
+        print("closing...")
     print("## test terminato ##")
