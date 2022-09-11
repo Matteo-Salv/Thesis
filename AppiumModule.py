@@ -18,12 +18,12 @@ def interactWithTextField(field, root):
     print(f"[Appium]: Interacting with a text field...")
     field.send_keys("The answer is 42")
     if appiumDriver.is_keyboard_shown():
+        # TODO: il click non sempre funziona, da testare su più app
         keyboard = root.find(".//XCUIElementTypeKeyboard")
         buttons = keyboard.findall('.//XCUIElementTypeButton')
-        print(f"last key name: {buttons[len(buttons)-1].get('name')}")
-        lastKeyboardButton = appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[len(buttons)-1].get('name'))
-        touchActions.tap(lastKeyboardButton).perform()
-        # TODO: il tap viene eseguito ma la view non cambia
+        print(f"[Appium]: Interacting with '{buttons[len(buttons)-1].get('name')}' on the keyboard")
+        time.sleep(3)
+        appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[len(buttons)-1].get('name')).click()
 def startAppiumModule(desiredCaps, bundleID):
 
     print("Appium module successfully started")
