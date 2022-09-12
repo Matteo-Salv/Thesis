@@ -81,10 +81,7 @@ def startAppiumModule(desiredCaps, bundleID):
                     appiumDriver.back()
                 else:
                     i = random.randint(0, len(accessibleElements) - 1)
-                    # TODO: risistemare il seguente if una volta terminato il test di TextField
-                    if interactedElement := appiumDriver.find_elements(by=AppiumBy.ID,
-                                                                                value='Search'):
-                                                                               # value=accessibleElements[i]):
+                    if interactedElement := appiumDriver.find_elements(by=AppiumBy.ID, value=accessibleElements[i]):
                         if str(interactedElement[0].get_attribute("type")) == "XCUIElementTypeTextField":
                             interactWithTextField(accessibleElements[i], root)
 

@@ -41,12 +41,10 @@ def resignWDA(udid):
 
 
 def installApp(appDir, udid):
-    print("Attenzione: Durante l'installazione potrebbe rendersi necessario spostarsi su impostazioni > generali > "
-          "gestione profili e dispositivo ed autorizzare il profilo 'Apple Development' con cui si è "
-          "firmato precedentemente l'app")
-    print("## Avvio installazione ##")
+    print("warning: during the installation process it may be necessary to go to 'settings > general > "
+          "profile and device management' and then authorize the corresponding 'Apple Development' profile with which "
+          "the app was previously signed")
     os.system(f"ios-deploy -i {udid} -b '{appDir}'")
-    print("## installazione completata ##")
     time.sleep(3)
 
 
@@ -54,28 +52,28 @@ if __name__ == '__main__':
     desiredCaps, appName, udid, app = defineCaps()
 
     while True:
-        val = input("Effettuare il resigning di WebDriverAgent? (y/n)")
+        val = input("do you want to resign the WebDriverAgent [WDA] App? (y/n)")
         if val == "y":
-            print("## avvio resigning ##")
+            print("## starting resign ##")
             resignWDA(udid)
-            print("## resigning completato ##")
+            print("## resign completed ##")
             break
 
         if val == "n":
             break
 
     while True:
-        val = input("Avviare l'installazione dell'app? (y/n)")
+        val = input("do you want to install the app? (y/n)")
         if val == "y":
-            print("## avvio installazione ##")
+            print("## starting installation ##")
             installApp(app, udid)
-            print("## installazione completata ##")
+            print("## installation completed ##")
             break
 
         if val == "n":
             break
 
-    print("## esecuzione del test ##")
+    print("## starting test ##")
     appIdentifier = straceModule.appConnection(appName)
     if appIdentifier is not None:
         appiumModuleProcess = Process(target=AppiumModule.startAppiumModule, args=(desiredCaps, appIdentifier))
@@ -84,4 +82,4 @@ if __name__ == '__main__':
         appiumModuleProcess.join()
     else:
         print("closing...")
-    print("## test terminato ##")
+    print("## test ended ##")

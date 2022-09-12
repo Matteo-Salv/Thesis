@@ -1,9 +1,9 @@
 # Automatic Dynamic Analysis on iOS devices
-### Tesi di laurea magistrale
+### Bachelor degree thesis
 ### Computer Engineering - Software Platforms and Cybersecurity
-### Università di Genova
-## Prerequisiti
-* Sistema Operativo macOS 
+### University of Genoa
+## Prerequisites
+* macOS device with the following dependencies already installed: 
   * [Homebrew](https://brew.sh)
   * Python 3.8+
   * Frida (pip install frida)
@@ -11,22 +11,28 @@
   * lxml (pip install lxml)
   * frida-tools (pip install frida-tools)
   * [Appium Desktop](https://github.com/appium/appium-desktop/releases)
-  * xCode per la configurazione di WDA incluso in Appium Desktop: vedere il capitolo "[full manual configuration di questa guida](https://appium.io/docs/en/drivers/ios-xcuitest-real-devices/)"
-* dispositivo fisico con Jailbreak attivo
-  * [Frida installato da Cydia](https://frida.re/docs/ios/)
-## Istruzioni per l'installazione dell'App
-Attenzione! A causa delle restrizioni di Apple è necessario anzitutto che le App da testare siano state precedentemente
-firmate tramite xCode oppure con tool specifici, ad esempio [iOS App Signer](https://dantheman827.github.io/ios-app-signer/)
-(fare fede alle istruzioni presente nel link per eventualmente procedere alla generazione di un certificato).
-## Istruzioni
-1. Connettere il dispositivo di test tramite USB al Mac mantenendolo sempre con lo schermo acceso (in iOS 14: *impostazini>Schermo e luminosità>Blocco automatico e selezionare 'mai'*)
-2. Avviare Appium Desktop assicurandosi che i parametri corrispondano alla seguente immagine:
-![configurazione di default appium](/docs/appium_default.png)
-3. Modificare i parametri di configurazione richiesti in *caps.json*
-## Disclaimer
-il presente progetto è stato sviluppato e testato su un Mac Intel e macOS 12 (Monterey).
-Non escludo la possibilità del funzionamento su Macchine Apple Silicon, tuttavia è probabile che saranno necessari alcuni
-adattamenti nel codice.
+  * xCode, for the WebDriverAgent configuration, already included in Appium Desktop. check [full manual configuration chapter here](https://appium.io/docs/en/drivers/ios-xcuitest-real-devices/)
+* physical jailbroken iDevice (with no or limited effort this script should work also on iPadOS)
+  * [Frida installed from Cydia](https://frida.re/docs/ios/)
+## Before starting: a note regarding the app sign on physical iDevices
+Warning! Due to Apple restrictions if you want to install an App with this script, you must sign it with a valid 
+developer certificate. You can use directly xCode (if you have the source code ready
+to be compiled) or alternatively sign directly the .App installer file with tools like [iOS App Signer](https://dantheman827.github.io/ios-app-signer/).
 
-Lo script strace (in particolar modo per quanto riguarda tracer.js) non è integralmente opera mia, si rimanda all'apposita
-licenza di utilizzo (LICENSE)
+If you don't want to sign and/or use the installation option available with this program take a look on
+Filza tweak (available on Cydia) or Cydia Impactor (only with a Paid developer profile) and then skip the installation step.
+## Instructions
+1. Connect the device under test with a USB cable and disable the automatic lock (iOS 14: *settings>Screen and Brightness>* set *Automatic lock* on *'never'*)
+2. Start Appium Desktop making sure that the corresponding parameters are the same as the following image:
+![Appium default configuration](/docs/appium_default.png)
+3. Edit the requested configuration parameters in *caps.json*
+## Disclaimer
+This project has been developed and tested on a Intel Mac with macOS12 (Monterey).
+It should work with minimum effort on Apple Silicon, but there are no tests so far in this sense.
+
+the strace module is not developed by me, but mostly forked and edited from another project freely available on Github.
+For more info, take a look on the corresponding LICENSE.
+
+## Testing Environment:
+* iPhone 6s with iOS 14.4.2 semi-tethered jailbroken with checkra1n
+* macbook pro 2016 with Intel i5-6360U @ 2.00GHz updated to macOS 12 Monterey, xCode 13 and python 3.9
