@@ -12,6 +12,8 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 buttonsToAutomaticallyAccept = ['OK', 'ok', 'allow', 'Allow', 'Consentire']
+appiumDriver: webdriver
+touchActions: TouchAction
 
 
 def interactWithTextField(field, root):
@@ -24,6 +26,27 @@ def interactWithTextField(field, root):
         print(f"[Appium]: Interacting with '{buttons[len(buttons)-1].get('name')}' on the keyboard")
         time.sleep(3)
         appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[len(buttons)-1].get('name')).click()
+
+
+def interactWithAlert(alert, root):
+    if textField := root.find(".//XCUIElementTypeTextField"):
+        field = appiumDriver.find_element(by=AppiumBy.NAME, value=textField.get('name'))
+        interactWithTextField(field, root)
+    buttons = alert.findall('.//XCUIElementTypeButton')
+    alreadyClicked = False
+    for button in buttons:
+        if button.get('name') in buttonsToAutomaticallyAccept:
+            print("[Appium]: click on the button " + button.get('name'))
+            button = appiumDriver.find_element(by=AppiumBy.NAME, value=button.get('name'))
+            touchActions.tap(button).perform()
+            alreadyClicked = True
+            break
+
+    if not alreadyClicked:
+        i = random.randint(0, len(buttons) - 1)
+        print("[Appium]: click on " + buttons[i].get('name'))
+        button = appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[i].get('name'))
+        touchActions.tap(button).perform()
 
 
 def startAppiumModule(desiredCaps, bundleID):
@@ -48,24 +71,7 @@ def startAppiumModule(desiredCaps, bundleID):
         if appState == 4:
             if alert := root.find(".//XCUIElementTypeAlert"):
                 print(f"[Appium]: alert found: '{alert.get('name')}'")
-                if textField := root.find(".//XCUIElementTypeTextField"):
-                    field = appiumDriver.find_element(by=AppiumBy.NAME, value=textField.get('name'))
-                    interactWithTextField(field, root)
-                buttons = alert.findall('.//XCUIElementTypeButton')
-                alreadyClicked = False
-                for button in buttons:
-                    if button.get('name') in buttonsToAutomaticallyAccept:
-                        print("[Appium]: click on the button " + button.get('name'))
-                        button = appiumDriver.find_element(by=AppiumBy.NAME, value=button.get('name'))
-                        touchActions.tap(button).perform()
-                        alreadyClicked = True
-                        break
-
-                if not alreadyClicked:
-                    i = random.randint(0, len(buttons) - 1)
-                    print("[Appium]: click on " + buttons[i].get('name'))
-                    button = appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[i].get('name'))
-                    touchActions.tap(button).perform()
+                interactWithAlert(alert, root)
 
             else:
                 if statusBar := root.find(".//XCUIElementTypeStatusBar"):
@@ -94,7 +100,6 @@ def startAppiumModule(desiredCaps, bundleID):
                             print(f"[Appium]: interacting with '{interactedElement[0].text}', "
                                   f"type '{interactedElement[0].get_attribute('type')}'")
                             touchActions.tap(interactedElement[0]).perform()
-
 
                     else:
                         print(f"[Appium]: Element {accessibleElements[i]} not found!")
