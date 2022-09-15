@@ -24,8 +24,9 @@ def interactWithTextField(field, root):
         print(f"[Appium]: Interacting with '{buttons[len(buttons)-1].get('name')}' on the keyboard")
         time.sleep(3)
         appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[len(buttons)-1].get('name')).click()
-def startAppiumModule(desiredCaps, bundleID):
 
+
+def startAppiumModule(desiredCaps, bundleID):
     print("Appium module successfully started")
     print("[Appium]: connecting to the device...")
     global appiumDriver
