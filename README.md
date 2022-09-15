@@ -15,7 +15,7 @@
 * physical jailbroken iDevice (with no or limited effort this script should work also on iPadOS)
   * [Frida installed from Cydia](https://frida.re/docs/ios/)
 ## Before starting: a note regarding the app sign on physical iDevices
-Warning! Due to Apple restrictions if you want to install an App with this script, you must sign it with a valid 
+Warning! Due to Apple restrictions if you want to install an App with this script, you must sign it before with a valid 
 developer certificate. You can use directly xCode (if you have the source code ready
 to be compiled) or alternatively sign directly the .App installer file with tools like [iOS App Signer](https://dantheman827.github.io/ios-app-signer/).
 
