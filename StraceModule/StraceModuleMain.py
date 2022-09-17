@@ -10,7 +10,6 @@ syscalls = [syscall.split(". ") for syscall in raw_syscall_list]
 syscalls = {syscall[0]:syscall[1] for syscall in syscalls}
 previousSyscall = ""
 previousThread_id = 0
-appIdentifier = ""
 
 def on_message(message, _):
     global previousSyscall
@@ -36,6 +35,7 @@ def on_detached():
 def appConnection(appName) -> str:
     global device
     device = frida.get_usb_device()
+    appIdentifier: str = None
     apps = device.enumerate_applications()
     for app in apps:
         if appName == app.name:
