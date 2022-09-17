@@ -12,6 +12,7 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 buttonsToAutomaticallyAccept = ['OK', 'ok', 'allow', 'Allow', 'Consentire']
+elementsToIgnore = ['XCUIElementTypeNavigationBar', 'XCUIElementTypeStaticText']
 appiumDriver: webdriver
 touchActions: TouchAction
 
@@ -57,7 +58,10 @@ def startAppiumModule(desiredCaps, bundleID):
     global touchActions
     touchActions = TouchAction(appiumDriver)
     print("[Appium]: ...connection completed!")
-    time.sleep(2)
+    print("[Appium]: waiting to synchronize with the app...")
+    time.sleep(15)
+    print("[Appium]: ...synchronization completed!")
+
 
     accessibleElements = list()
     previousAccessibleElements = list()
@@ -69,16 +73,19 @@ def startAppiumModule(desiredCaps, bundleID):
         # 3 is running in background. 4 is running in foreground
         appState = appiumDriver.query_app_state(bundleID)
         if appState == 4:
+            # alert found
             if alert := root.find(".//XCUIElementTypeAlert"):
                 print(f"[Appium]: alert found: '{alert.get('name')}'")
                 interactWithAlert(alert, root)
 
             else:
+                # delete status bar
                 if statusBar := root.find(".//XCUIElementTypeStatusBar"):
                     statusBar.getparent().remove(statusBar)
 
+                # add potential iteractive elements
                 for element in root.iter():
-                    if element.get('accessible') == 'true' and str(element.get('name')) != "None":
+                    if element.get('accessible') == 'true' and str(element.get('name')) != "None" and element.get('type') not in elementsToIgnore:
                         accessibleElements.append(element.get('name'))
                         print(f"[Appium]: '{element.get('name')}'")
 
