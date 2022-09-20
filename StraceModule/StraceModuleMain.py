@@ -32,14 +32,27 @@ def on_detached():
     sys.exit()
 
 
+def appIsAlreadyRunning(appName) -> bool:
+    apps = device.enumerate_processes()
+    for app in apps:
+        if app.name == appName:
+            return True
+    return False
+
+
 def appConnection(appName) -> str:
     global device
     device = frida.get_usb_device()
+    if appIsAlreadyRunning(appName):
+        print("Error! App must be manually closed on the device! Please check and then run again!")
+        return None
     appIdentifier: str = None
     apps = device.enumerate_applications()
+    global pid
     for app in apps:
         if appName == app.name:
             appIdentifier: str = app.identifier
+            pid = app.identifier
             break
 
     if appIdentifier is None:
@@ -47,7 +60,6 @@ def appConnection(appName) -> str:
         return None
     else:
         print("Strace module successfully started")
-        global pid
         pid = device.spawn([appIdentifier])
         print(f"[strace]: pid: {pid}")
         global session
