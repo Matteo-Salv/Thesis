@@ -39,6 +39,7 @@ function UnfollowThread(threadId) {
 
 function ThreadStalker() {
   FollowThread(Process.getCurrentThreadId());
+  //effettuo l'attach dell'export chiamato '_pthread_start' -> intercetto ogni creazione di un nuovo thread
   Interceptor.attach(Module.getExportByName(null, "_pthread_start"), {
     onEnter(args) {
       if (isThreadFollowed(this.threadId)) {

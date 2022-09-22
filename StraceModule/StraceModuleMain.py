@@ -11,6 +11,7 @@ syscalls = {syscall[0]:syscall[1] for syscall in syscalls}
 previousSyscall = ""
 previousThread_id = 0
 
+
 def on_message(message, _):
     global previousSyscall
     global previousThread_id
