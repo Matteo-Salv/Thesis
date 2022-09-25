@@ -27,6 +27,7 @@
 28. sendmsg
 29. recvfrom
 30. accept
+31. getpeername
 32. getsockname
 33. access
 34. chflags
