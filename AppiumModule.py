@@ -58,8 +58,6 @@ def interactWithAlert(alert, root):
         button = appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[i].get('name'))
         touchActions.tap(button).perform()
 
-    print("click completato")
-
 
 def interactWithSlider(slider):
     print(f"[Appium]: Interacting with a slider...")
@@ -129,7 +127,7 @@ def startAppiumModule(desiredCaps, bundleID):
 
                 # add potential iteractive elements
                 for element in root.iter():
-                    if element.get('accessible') == 'true' and element.get('type') not in elementsToIgnore:
+                    if element.get('accessible') == 'true' and element.get('enabled') == 'true' and element.get('type') not in elementsToIgnore:
                         if str(element.get('name')) != 'None':
                             accessibleElements.append(AccessibleElement(element.get('name'), True))
                         else:
