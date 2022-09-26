@@ -11,11 +11,6 @@ import warnings
 # necessario in quanto il metodo root.find() di lxml crea delle futurewarning
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-buttonsToAutomaticallyAccept = ['OK', 'ok', 'allow', 'Allow', 'Consentire']
-elementsToIgnore = ['XCUIElementTypeNavigationBar', 'XCUIElementTypeStaticText', 'XCUIElementTypeTextView', 'XCUIElementTypeNavigationBar']
-appiumDriver: webdriver
-touchActions: TouchAction
-
 
 @dataclass
 class AccessibleElement:
@@ -23,155 +18,171 @@ class AccessibleElement:
     isByName: bool
 
 
-def interactWithTextField(field, root):
-    print(f"[Appium]: Interacting with a text field...")
-    field.send_keys("The answer is 42")
-    if appiumDriver.is_keyboard_shown():
-        # TODO: il click non sempre funziona, da testare su più app
-        # necessario altrimenti Appium potrebbe non vedere la tastiera
-        time.sleep(5)
-        keyboard = root.find(".//XCUIElementTypeKeyboard")
-        buttons = keyboard.findall('.//XCUIElementTypeButton')
-        print(f"[Appium]: Interacting with '{buttons[len(buttons) - 1].get('name')}' on the keyboard")
-        time.sleep(3)
-        appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[len(buttons) - 1].get('name')).click()
+class AppiumModule:
+    def __init__(self):
+        self.alertButtonsToAccept = list()
+        self.buttonsToIgnore = list()
+        self.elementsToIgnore = ['XCUIElementTypeNavigationBar', 'XCUIElementTypeStaticText', 'XCUIElementTypeTextView',
+                            'XCUIElementTypeNavigationBar']
+        self.appiumDriver: webdriver
+        self.touchActions: TouchAction
 
+    def interactWithTextField(self, field, root):
+        print(f"[Appium]: Interacting with a text field...")
+        field.send_keys("The answer is 42")
+        if self.appiumDriver.is_keyboard_shown():
+            # TODO: il click non sempre funziona, da testare su più app
+            # necessario altrimenti Appium potrebbe non vedere la tastiera
+            time.sleep(5)
+            keyboard = root.find(".//XCUIElementTypeKeyboard")
+            buttons = keyboard.findall('.//XCUIElementTypeButton')
+            print(f"[Appium]: Interacting with '{buttons[len(buttons) - 1].get('name')}' on the keyboard")
+            time.sleep(3)
+            self.appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[len(buttons) - 1].get('name')).click()
 
-def interactWithAlert(alert, root):
-    if textField := root.find(".//XCUIElementTypeTextField"):
-        field = appiumDriver.find_element(by=AppiumBy.NAME, value=textField.get('name'))
-        interactWithTextField(field, root)
-    buttons = alert.findall('.//XCUIElementTypeButton')
-    alreadyClicked = False
-    for button in buttons:
-        if button.get('name') in buttonsToAutomaticallyAccept:
-            print("[Appium]: click on the button " + button.get('name'))
-            button = appiumDriver.find_element(by=AppiumBy.NAME, value=button.get('name'))
-            touchActions.tap(button).perform()
-            alreadyClicked = True
-            break
-            # TODO: da testare, a volte si blocca dopo aver cliccato un tasto tra quelli da accettare in automatico
+    def interactWithAlert(self, alert, root):
+        if textField := root.find(".//XCUIElementTypeTextField"):
+            field = self.appiumDriver.find_element(by=AppiumBy.NAME, value=textField.get('name'))
+            self.interactWithTextField(field, root)
+        buttons = alert.findall('.//XCUIElementTypeButton')
+        alreadyClicked = False
+        for button in buttons:
+            if button.get('name') in self.alertButtonsToAccept:
+                print("[Appium]: click on the button " + button.get('name'))
+                button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=button.get('name'))
+                self.touchActions.tap(button).perform()
+                alreadyClicked = True
+                break
+                # TODO: da testare, a volte si blocca dopo aver cliccato un tasto tra quelli da accettare in automatico
 
-    if not alreadyClicked:
-        i = random.randint(0, len(buttons) - 1)
-        print("[Appium]: click on " + buttons[i].get('name'))
-        button = appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[i].get('name'))
-        touchActions.tap(button).perform()
+        if not alreadyClicked:
+            i = random.randint(0, len(buttons) - 1)
+            print("[Appium]: click on " + buttons[i].get('name'))
+            button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[i].get('name'))
+            self.touchActions.tap(button).perform()
 
-
-def interactWithSlider(slider):
-    print(f"[Appium]: Interacting with a slider...")
-    touchActions.tap(slider).perform()
-    value = random.randint(0, 100)
-    print(f"setting slider to value {value}%")
-    if value == 100:
-        slider.set_value(str(1))
-    else:
-        slider.set_value("0." + str(value))
-
-
-def interactWithElement(element, root):
-    if str(element.get_attribute("type")) == "XCUIElementTypeTextField":
-        interactWithTextField(element, root)
-    elif str(element.get_attribute("type")) == "XCUIElementTypeSlider":
-        interactWithSlider(element)
-    else:
-        print(f"[Appium]: interacting with '{element.text}', "
-              f"type '{element.get_attribute('type')}'")
-        touchActions.tap(element).perform()
-
-
-def startAppiumModule(desiredCaps, bundleID):
-    previousRoot = None
-    alreadyInteracted = False
-    alreadyGoneBack = False
-    accessibleElements = list()
-    print("Appium module successfully started")
-    print("[Appium]: connecting to the device...")
-    global appiumDriver
-    appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desiredCaps)
-    global touchActions
-    touchActions = TouchAction(appiumDriver)
-    print("[Appium]: ...connection completed!")
-    time.sleep(5)
-
-    while True:
-        root: eT._Element = eT.XML(appiumDriver.page_source.encode())
-
-        # 0 is not installed. 1 is not running. 2 is running in background or suspended.
-        # 3 is running in background. 4 is running in foreground
-        appState = appiumDriver.query_app_state(bundleID)
-        if appState == 4:
-
-            # alert found
-            if alert := root.find(".//XCUIElementTypeAlert"):
-                print(f"[Appium]: alert found: '{alert.get('name')}'")
-                interactWithAlert(alert, root)
-                alreadyInteracted = True
-
-            # check if the keyboard is shown
-            elif appiumDriver.is_keyboard_shown():
-                if textFields := appiumDriver.find_elements(by=AppiumBy.XPATH, value='//XCUIElementTypeTextField'):
-                    for textField in textFields:
-                        interactWithTextField(textField, root)
-                    alreadyInteracted = True
-                else:
-                    print(
-                        "[Appium]: Something went wrong. The keyboard is shown but there are not Text Fields. Closing...")
-                    sys.exit()
-
-            elif not alreadyInteracted:
-                # delete status bar
-                if statusBar := root.find(".//XCUIElementTypeStatusBar"):
-                    statusBar.getparent().remove(statusBar)
-
-                # add potential iteractive elements
-                for element in root.iter():
-                    if element.get('accessible') == 'true' and element.get('enabled') == 'true' and element.get('type') not in elementsToIgnore:
-                        if str(element.get('name')) != 'None':
-                            accessibleElements.append(AccessibleElement(element.get('name'), True))
-                        else:
-                            accessibleElements.append(AccessibleElement(element.get('type'), False))
-                        print(f"[Appium]: '{accessibleElements[len(accessibleElements)-1].value}', "
-                              f"'{accessibleElements[len(accessibleElements)-1].isByName}'")
-
-                # check if the previous interaction worked
-                if previousRoot is not None and eT.tostring(previousRoot) == eT.tostring(root) and not alreadyGoneBack:
-                    print("[Appium]: the previous interaction didn't work, going back...")
-                    appiumDriver.back()
-                    alreadyGoneBack = True
-
-                else:
-                    alreadyGoneBack = False
-                    i = random.randint(0, len(accessibleElements) - 1)
-                    print(f"[Appium]: Element '{accessibleElements[i].value}' selected")
-                    if accessibleElements[i].isByName:
-                        if interactedElement := appiumDriver.find_element(by=AppiumBy.ID, value=accessibleElements[i].value):
-                            interactWithElement(interactedElement, root)
-                        else:
-                            print(f"[Appium]: Element '{accessibleElements[i].value}' not found!")
-                    else:
-                        if interactedElement := appiumDriver.find_elements(by=AppiumBy.CLASS_NAME, value=accessibleElements[i].value):
-                            interacted = False
-                            while not interacted and len(interactedElement) > 0:
-                                k = random.randint(0, len(interactedElement) - 1)
-                                if interactedElement[k].get_attribute('accessible') == 'true':
-                                    interactWithElement(interactedElement[k], root)
-                                    interacted = True
-                                else:
-                                    interactedElement.remove(interactedElement[k])
-                        else:
-                            print(f"[Appium]: Element {accessibleElements[i]} not found!")
-
-                time.sleep(5)
-                alreadyInteracted = False
-                previousRoot = root
-                accessibleElements.clear()
-                print("==== INTERACTION COMPLETED ====")
-
-        elif appState == 3 or appState == 2:
-            print("[Appium]: app is running in background, going back in foreground...")
-            appiumDriver.activate_app(bundleID)
+    def interactWithSlider(self, slider):
+        print(f"[Appium]: Interacting with a slider...")
+        self.touchActions.tap(slider).perform()
+        value = random.randint(0, 100)
+        print(f"setting slider to value {value}%")
+        if value == 100:
+            slider.set_value(str(1))
         else:
-            print("[Appium]: the app is not running, closing!")
-            sys.exit()
+            slider.set_value("0." + str(value))
+
+    def interactWithElement(self, element, root):
+        if str(element.get_attribute("type")) == "XCUIElementTypeTextField":
+            self.interactWithTextField(element, root)
+        elif str(element.get_attribute("type")) == "XCUIElementTypeSlider":
+            self.interactWithSlider(element)
+        else:
+            print(f"[Appium]: interacting with '{element.text}', "
+                  f"type '{element.get_attribute('type')}'")
+            self.touchActions.tap(element).perform()
+
+    def startAppiumModule(self, desiredCaps, bundleID, alertButtonsToAccept: str, buttonsToIgnore: str):
+        previousRoot = None
+        alreadyInteracted = False
+        alreadyGoneBack = False
+        if alertButtonsToAccept != "":
+            self.alertButtonsToAccept = alertButtonsToAccept.split(',')
+        if buttonsToIgnore != "":
+            self.buttonsToIgnore = buttonsToIgnore.split(',')
+        accessibleElements = list()
+        print("Appium module successfully started")
+        print("[Appium]: connecting to the device...")
+        self.appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desiredCaps)
+        self.touchActions = TouchAction(self.appiumDriver)
+        print("[Appium]: ...connection completed!")
+        time.sleep(5)
+
+        while True:
+            root: eT._Element = eT.XML(self.appiumDriver.page_source.encode())
+
+            # 0 is not installed. 1 is not running. 2 is running in background or suspended.
+            # 3 is running in background. 4 is running in foreground
+            appState = self.appiumDriver.query_app_state(bundleID)
+            if appState == 4:
+
+                # alert found
+                if alert := root.find(".//XCUIElementTypeAlert"):
+                    print(f"[Appium]: alert found: '{alert.get('name')}'")
+                    self.interactWithAlert(alert, root)
+                    alreadyInteracted = True
+
+                # check if the keyboard is shown
+                elif self.appiumDriver.is_keyboard_shown():
+                    if textFields := self.appiumDriver.find_elements(by=AppiumBy.XPATH,
+                                                                     value='//XCUIElementTypeTextField'):
+                        for textField in textFields:
+                            self.interactWithTextField(textField, root)
+                        alreadyInteracted = True
+                    else:
+                        print("[Appium]: Something went wrong. The keyboard is shown but there are not Text Fields. Closing...")
+                        sys.exit()
+
+                elif not alreadyInteracted:
+                    # delete status bar
+                    if statusBar := root.find(".//XCUIElementTypeStatusBar"):
+                        statusBar.getparent().remove(statusBar)
+
+                    # add potential iteractive elements
+                    for element in root.iter():
+                        if element.get('accessible') == 'true' and element.get('enabled') == 'true' and element.get(
+                                'type') not in self.elementsToIgnore and element.get('name') not in self.buttonsToIgnore:
+                            if str(element.get('name')) != 'None':
+                                accessibleElements.append(AccessibleElement(element.get('name'), True))
+                            else:
+                                accessibleElements.append(AccessibleElement(element.get('type'), False))
+                            print(f"[Appium]: '{accessibleElements[len(accessibleElements) - 1].value}', "
+                                  f"'{accessibleElements[len(accessibleElements) - 1].isByName}'")
+
+                    # check if the previous interaction worked
+                    if previousRoot is not None and eT.tostring(previousRoot) == eT.tostring(
+                            root) and not alreadyGoneBack:
+                        print("[Appium]: the previous interaction didn't work, going back...")
+                        self.appiumDriver.back()
+                        alreadyGoneBack = True
+
+                    elif len(accessibleElements) != 0:
+                        alreadyGoneBack = False
+                        i = random.randint(0, len(accessibleElements) - 1)
+                        print(f"[Appium]: Element '{accessibleElements[i].value}' selected")
+                        if accessibleElements[i].isByName:
+                            if interactedElement := self.appiumDriver.find_element(by=AppiumBy.ID,
+                                                                                   value=accessibleElements[i].value):
+                                self.interactWithElement(interactedElement, root)
+                            else:
+                                print(f"[Appium]: Element '{accessibleElements[i].value}' not found!")
+                        else:
+                            if interactedElement := self.appiumDriver.find_elements(by=AppiumBy.CLASS_NAME,
+                                                                                    value=accessibleElements[i].value):
+                                interacted = False
+                                while not interacted and len(interactedElement) > 0:
+                                    k = random.randint(0, len(interactedElement) - 1)
+                                    if interactedElement[k].get_attribute('accessible') == 'true':
+                                        self.interactWithElement(interactedElement[k], root)
+                                        interacted = True
+                                    else:
+                                        interactedElement.remove(interactedElement[k])
+                            else:
+                                print(f"[Appium]: Element {accessibleElements[i]} not found!")
+                    else:
+                        print("[Appium]: no accessible elements found!, going back to the previous view...")
+                        self.appiumDriver.back()
+
+                    previousRoot = root
+                    accessibleElements.clear()
+                alreadyInteracted = False
+                print("==== INTERACTION COMPLETED ====")
+                # sleep che serve sia per sincronizzare l'interazione di appium che eventualmente permettere all'utente
+                # di interagire manualmente con l'app prima della prossima interazione
+                time.sleep(10)
+
+            elif appState == 3 or appState == 2:
+                print("[Appium]: app is running in background, going back in foreground...")
+                self.appiumDriver.activate_app(bundleID)
+            else:
+                print("[Appium]: the app is not running, closing!")
+                sys.exit()

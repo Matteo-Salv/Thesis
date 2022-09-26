@@ -1,25 +1,41 @@
 import json
 import os
+import sys
 import time
+from dataclasses import dataclass
 import StraceModule.StraceModuleMain as straceModule
 from multiprocessing import Process
-import AppiumModule
+import AppiumModule as am
+
+@dataclass
+class jsonElements:
+    desiredCaps: dict
+    appName: str
+    udid: str
+    app: str
+    alertButtonsToAccept: str
+    buttonsToIgnore: str
 
 
-def defineCaps():
+def readJson():
     f = open("caps.json")
-    data = json.load(f)
+    data: dict = json.load(f)
 
-    desired_caps = dict(
-        platformName='iOS',
-        platformVersion=data["version"],
-        deviceName=data["device"],
-        automationName='xcuitest',
-        udid=data["udid"],
-        wdaLaunchTimeout="120000",
-        noReset="true"
-    )
-    return desired_caps, data["appName"], data["udid"], data["app"]
+    if {"version", "device", "udid", "appName", "app", "alertButtonsToAccept", "buttonsToIgnore"} == data.keys():
+        desired_caps = dict(
+            platformName='iOS',
+            platformVersion=data["version"],
+            deviceName=data["device"],
+            automationName='xcuitest',
+            udid=data["udid"],
+            wdaLaunchTimeout="120000",
+            noReset="true"
+        )
+        #return desired_caps, data["appName"], data["udid"], data["app"], data["alertButtonsToAccept"], data["buttonsToIgnore"]
+        return jsonElements(desired_caps, data["appName"], data["udid"], data["app"], data["alertButtonsToAccept"], data["buttonsToIgnore"])
+    else:
+        print("error! missing arguments inside caps.json! Follow the instruction!")
+        return None
 
 
 def resignWDA(udid):
@@ -49,37 +65,43 @@ def installApp(appDir, udid):
 
 
 if __name__ == '__main__':
-    desiredCaps, appName, udid, app = defineCaps()
+    if readJson() is not None:
+        jsonVals = readJson()
+        while True:
+            val = input("do you want to resign the WebDriverAgent [WDA] App? (y/n)")
+            if val == "y":
+                print("## starting resign ##")
+                resignWDA(jsonVals.udid)
+                print("## resign completed ##")
+                break
 
-    while True:
-        val = input("do you want to resign the WebDriverAgent [WDA] App? (y/n)")
-        if val == "y":
-            print("## starting resign ##")
-            resignWDA(udid)
-            print("## resign completed ##")
-            break
+            if val == "n":
+                break
 
-        if val == "n":
-            break
+        while True:
+            val = input("do you want to install the app? (y/n)")
+            if val == "y":
+                if jsonVals.app == "":
+                    print("error: 'app' is empty in the configuration file. Please check caps.json and run this program again")
+                    sys.exit()
+                else:
+                    print("## starting installation ##")
+                    installApp(jsonVals.app, jsonVals.udid)
+                    print("## installation completed ##")
+                break
 
-    while True:
-        val = input("do you want to install the app? (y/n)")
-        if val == "y":
-            print("## starting installation ##")
-            installApp(app, udid)
-            print("## installation completed ##")
-            break
+            if val == "n":
+                break
 
-        if val == "n":
-            break
-
-    print("## starting test ##")
-    appIdentifier = straceModule.appConnection(appName)
-    if appIdentifier is not None:
-        appiumModuleProcess = Process(target=AppiumModule.startAppiumModule, args=(desiredCaps, appIdentifier))
-        appiumModuleProcess.start()
-        straceModule.startStraceModule()
-        appiumModuleProcess.join()
+        print("## starting test ##")
+        appIdentifier = straceModule.appConnection(jsonVals.appName)
+        appiumModule = am.AppiumModule()
+        if appIdentifier is not None:
+            appiumModuleProcess = Process(target=appiumModule.startAppiumModule,
+                                          args=(jsonVals.desiredCaps, appIdentifier, jsonVals.alertButtonsToAccept, jsonVals.buttonsToIgnore))
+            appiumModuleProcess.start()
+            straceModule.startStraceModule()
+            appiumModuleProcess.join()
     else:
         print("closing...")
     print("## test ended ##")

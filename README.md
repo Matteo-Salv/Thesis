@@ -1,6 +1,5 @@
 # Automatic Dynamic Analysis on iOS devices
-### Bachelor degree thesis
-### Computer Engineering - Software Platforms and Cybersecurity
+### Bachelor degree thesis, Computer Engineering - Software Platforms and Cybersecurity
 ### University of Genoa
 ## Prerequisites
 * macOS device with the following dependencies already installed: 
@@ -25,14 +24,33 @@ Filza tweak (available on Cydia) or Cydia Impactor (only with a Paid developer p
 1. Connect the device under test with a USB cable and disable the automatic lock (iOS 14: *settings>Screen and Brightness>* set *Automatic lock* on *'never'*)
 2. Start Appium Desktop making sure that the corresponding parameters are the same as the following image:
 ![Appium default configuration](/docs/appium_default.png)
-3. Edit the requested configuration parameters in *caps.json*
+3. Edit the requested configuration parameters in *caps.json*:
+   * version = the iOS version installed
+   * udid
+   * app = path to the .app you want to test (needed only if you want to install it with this program)
+   * appName = the name of the application
+   * alertButtonsToAccept = the name of the buttons inside an alert you want to automatically accept, separated by a ','
+   * buttonsToIgnore = the name of the buttons you want to ignore, separated by a ','
+   
+   please note that *version, udid and appName* are mandatory. If you don't want to set the other options, you can 
+leave them blank.
+Example:
+```
+{"version":"14.4",
+  "device":"iPhone 6s",
+  "udid":"a123456789bcd87654e21",
+  "app":"/Users/foo.app",
+  "appName":"foo",
+  "alertButtonsToAccept": "OK,ok,allow,Allow",
+  "buttonsToIgnore": ""
+}
+```
 ## Disclaimer
 This project has been developed and tested on a Intel Mac with macOS12 (Monterey).
 It should work with minimum effort on Apple Silicon, but there are no tests so far in this sense.
 
 the strace module is not developed by me, but mostly forked and edited from another project freely available on Github.
 For more info, take a look on the corresponding LICENSE.
-
 ## Testing Environment:
 * iPhone 6s with iOS 14.4.2 semi-tethered jailbroken with checkra1n
 * macbook pro 2016 with Intel i5-6360U @ 2.00GHz updated to macOS 12 Monterey, xCode 13 and python 3.9
