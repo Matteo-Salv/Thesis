@@ -39,11 +39,11 @@ def readJson():
 
 
 def resignWDA(udid):
-    print(
-        "durante l'installazione di WebDriverAgent spostarsi su impostazioni > generali > gestione profili e dispositivo"
-        " ed autorizzare il profilo 'Apple Development'")
+    print("warning: during the WebDriverAgent installation process it may be necessary to go to 'settings > general > "
+          "profile and device management' and then authorize the corresponding 'Apple Development' profile with which "
+          "the app was previously signed")
     time.sleep(3)
-    print("avvio test e resigning...")
+    print("starting resigning...")
     currentDir = os.getcwd()
     os.chdir(
         "/Applications/Appium Server GUI.app/Contents/Resources/app/node_modules/appium/node_modules/appium-webdriveragent")

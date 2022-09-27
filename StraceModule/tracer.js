@@ -11,16 +11,21 @@ function isThreadFollowed(tid) {
 function FollowThread(tid) {
   ThreadsFollowed[tid] = true;
   console.log("[Strace]: [+] Following thread " + tid);
+  //Frida Stalker on current thread
   Stalker.follow(tid, {
     transform: function (iterator) {
+      //read the instruction
       const instruction = iterator.next();
       do {
+        //search for supervisor call. .mnemonic is a parse method provided by Frida on the object returned from iterator.next()
         if (instruction.mnemonic === "svc") {
+          //this function send the current (thread) CPU context to onMatch, registers included
           iterator.putCallout(onMatch);
         }
         iterator.keep();
       } while (iterator.next() !== null);
       function onMatch(context) {
+        //from the current context extract the content of x16 register (which contains the syscall number)
         send(tid + ":" + context.x16.toInt32());
       }
     },
