@@ -31,29 +31,10 @@ def readJson():
             wdaLaunchTimeout="120000",
             noReset="true"
         )
-        #return desired_caps, data["appName"], data["udid"], data["app"], data["alertButtonsToAccept"], data["buttonsToIgnore"]
         return jsonElements(desired_caps, data["appName"], data["udid"], data["app"], data["alertButtonsToAccept"], data["buttonsToIgnore"])
     else:
         print("error! missing arguments inside caps.json! Follow the instruction!")
         return None
-
-
-def resignWDA(udid):
-    print("warning: during the WebDriverAgent installation process it may be necessary to go to 'settings > general > "
-          "profile and device management' and then authorize the corresponding 'Apple Development' profile with which "
-          "the app was previously signed")
-    time.sleep(3)
-    print("starting resigning...")
-    currentDir = os.getcwd()
-    os.chdir(
-        "/Applications/Appium Server GUI.app/Contents/Resources/app/node_modules/appium/node_modules/appium-webdriveragent")
-    os.system("xcodebuild "
-              "-quiet "
-              "-project WebDriverAgent.xcodeproj "
-              "-scheme WebDriverAgentRunner "
-              f"-destination 'id={udid}' "
-              "-allowProvisioningUpdates")
-    os.chdir(currentDir)
 
 
 def installApp(appDir, udid):
@@ -67,16 +48,6 @@ def installApp(appDir, udid):
 if __name__ == '__main__':
     if readJson() is not None:
         jsonVals = readJson()
-        while True:
-            val = input("do you want to resign the WebDriverAgent [WDA] App? (y/n)")
-            if val == "y":
-                print("## starting resign ##")
-                resignWDA(jsonVals.udid)
-                print("## resign completed ##")
-                break
-
-            if val == "n":
-                break
 
         while True:
             val = input("do you want to install the app? (y/n)")

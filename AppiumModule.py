@@ -27,11 +27,11 @@ class AppiumModule:
         self.appiumDriver: webdriver
         self.touchActions: TouchAction
 
-    def interactWithTextField(self, field, root):
+    def interactWithTextField(self, field):
         print(f"[Appium]: Interacting with a text field...")
         field.send_keys("The answer is 42")
         if self.appiumDriver.is_keyboard_shown():
-            # TODO: il click non sempre funziona, da testare su più app
+            root: eT._Element = eT.XML(self.appiumDriver.page_source.encode())
             # necessario altrimenti Appium potrebbe non vedere la tastiera
             time.sleep(5)
             keyboard = root.find(".//XCUIElementTypeKeyboard")
@@ -43,7 +43,7 @@ class AppiumModule:
     def interactWithAlert(self, alert, root):
         if textField := root.find(".//XCUIElementTypeTextField"):
             field = self.appiumDriver.find_element(by=AppiumBy.NAME, value=textField.get('name'))
-            self.interactWithTextField(field, root)
+            self.interactWithTextField(field)
         buttons = alert.findall('.//XCUIElementTypeButton')
         alreadyClicked = False
         for button in buttons:
@@ -73,7 +73,7 @@ class AppiumModule:
 
     def interactWithElement(self, element, root):
         if str(element.get_attribute("type")) == "XCUIElementTypeTextField":
-            self.interactWithTextField(element, root)
+            self.interactWithTextField(element)
         elif str(element.get_attribute("type")) == "XCUIElementTypeSlider":
             self.interactWithSlider(element)
         else:
@@ -116,7 +116,7 @@ class AppiumModule:
                     if textFields := self.appiumDriver.find_elements(by=AppiumBy.XPATH,
                                                                      value='//XCUIElementTypeTextField'):
                         for textField in textFields:
-                            self.interactWithTextField(textField, root)
+                            self.interactWithTextField(textField)
                         alreadyInteracted = True
                     else:
                         print("[Appium]: Something went wrong. The keyboard is shown but there are not Text Fields. Closing...")

@@ -7,10 +7,14 @@
   * Python 3.8+
   * Frida (pip install frida)
   * ios-deploy (brew install ios-deploy)
+  * carthage (brew install carthage)
   * lxml (pip install lxml)
   * frida-tools (pip install frida-tools)
-  * [Appium Desktop](https://github.com/appium/appium-desktop/releases)
-  * xCode, for the WebDriverAgent configuration, already included in Appium Desktop. check [full manual configuration chapter here](https://appium.io/docs/en/drivers/ios-xcuitest-real-devices/)
+  * [Appium](https://appium.io/docs/en/about-appium/getting-started/?lang=it)
+    * NOTE: Appium Desktop is note compatible with xCode 14 suite. For my tests I used Appium v2.0 beta. If you're in the same situation,
+    take a look on the section [About Appium 2](##About Appium 2)
+  * xCode, for the WebDriverAgent configuration, already included in Appium. check [full manual configuration chapter here](https://appium.io/docs/en/drivers/ios-xcuitest-real-devices/)
+    and [About Appium 2](##About Appium 2) if you're using Appium 2
 * physical jailbroken iDevice (with no or limited effort this script should work also on iPadOS)
   * [Frida installed from Cydia](https://frida.re/docs/ios/)
 ## Before starting: a note regarding the app sign on physical iDevices
@@ -22,8 +26,7 @@ If you don't want to sign and/or use the installation option available with this
 Filza tweak (available on Cydia) or Cydia Impactor (only with a Paid developer profile) and then skip the installation step.
 ## Instructions
 1. Connect the device under test with a USB cable and disable the automatic lock (iOS 14: *settings>Screen and Brightness>* set *Automatic lock* on *'never'*)
-2. Start Appium Desktop making sure that the corresponding parameters are the same as the following image:
-![Appium default configuration](/docs/appium_default.png)
+2. Start Appium
 3. Edit the requested configuration parameters in *caps.json*:
    * version = the iOS version installed
    * udid
@@ -53,4 +56,21 @@ the strace module is not developed by me, but mostly forked and edited from anot
 For more info, take a look on the corresponding LICENSE.
 ## Testing Environment:
 * iPhone 6s with iOS 14.4.2 semi-tethered jailbroken with checkra1n
-* macbook pro 2016 with Intel i5-6360U @ 2.00GHz updated to macOS 12 Monterey, xCode 13 and python 3.9
+* macbook pro 2016 with Intel i5-6360U @ 2.00GHz updated to macOS 12 Monterey, xCode 14 and python 3.9
+## About Appium 2
+Currently (october 2022) Appium Desktop and Appium 1.x doesn't support xCode 14. If you're in the same situation, after
+the configuration of node.js and NPM use the following guide for Appium installation and execution:
+1. npm install -g appium@next
+2. appium plugin install execute-driver
+3. appium driver install xcuitest
+Then check the installation with *appium-doctor*:
+1. npm install appium-doctor
+2. appium-doctor --ios
+
+eventually fix any mandatory dependency.
+
+The WebDriverAgent folder is the following:
+* /Users/matteo/.appium/node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent
+
+After that, to run Appium:
+* appium -pa /wd/hub --use-plugins execute-driver
