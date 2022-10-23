@@ -3,7 +3,7 @@ import os
 import sys
 import time
 from dataclasses import dataclass
-import StraceModule.StraceModuleMain as straceModule
+import StraceModule.StraceModule as sm
 from multiprocessing import Process
 import AppiumModule as am
 
@@ -65,11 +65,13 @@ if __name__ == '__main__':
                 break
 
         print("## starting test ##")
+        straceModule = sm.StraceModule()
         appIdentifier = straceModule.appConnection(jsonVals.appName)
         appiumModule = am.AppiumModule()
         if appIdentifier is not None:
             appiumModuleProcess = Process(target=appiumModule.startAppiumModule,
-                                          args=(jsonVals.desiredCaps, appIdentifier, jsonVals.alertButtonsToAccept, jsonVals.buttonsToIgnore))
+                                          args=(jsonVals.desiredCaps, appIdentifier, jsonVals.alertButtonsToAccept,
+                                                jsonVals.buttonsToIgnore))
             appiumModuleProcess.start()
             straceModule.startStraceModule()
             appiumModuleProcess.join()

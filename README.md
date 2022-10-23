@@ -56,7 +56,7 @@ the strace module is not developed by me, but mostly forked and edited from anot
 For more info, take a look on the corresponding LICENSE.
 ## Testing Environment:
 * iPhone 6s with iOS 14.4.2 semi-tethered jailbroken with checkra1n
-* macbook pro 2016 with Intel i5-6360U @ 2.00GHz updated to macOS 12 Monterey, xCode 14 and python 3.9
+* macbook pro 2016 with Intel i5-6360U @ 2.00GHz updated to macOS 12 Monterey, xCode 14 and python 3.10
 ## About Appium 2
 Currently (october 2022) Appium Desktop and Appium 1.x doesn't support xCode 14. If you're in the same situation, after
 the configuration of node.js and NPM use the following guide for Appium installation and execution:
