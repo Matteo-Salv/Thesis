@@ -64,13 +64,22 @@ the configuration of node.js and NPM use the following guide for Appium installa
 2. appium plugin install execute-driver
 3. appium driver install xcuitest
 Then check the installation with *appium-doctor*:
-1. npm install appium-doctor
-2. appium-doctor --ios
+   1. npm install appium-doctor
+   2. appium-doctor --ios
 
 eventually fix any mandatory dependency.
 
+Please note that after the first installation it is necessary to sign the WebDriverAgent bundled with Appium through xcodebuild.
+Check [this guide](https://appium.io/docs/en/drivers/ios-xcuitest-real-devices/), in particular the chapter
+'full manual configuration'. The command to resign is the following:
+```
+xcodebuild -project WebDriverAgent.xcodeproj -scheme WebDriverAgentRunner -destination 'id=123456789abcdef' -allowProvisioningUpdates test
+```
 The WebDriverAgent folder is the following:
-* /Users/matteo/.appium/node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent
-
+```
+/Users/matteo/.appium/node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent
+```
 After that, to run Appium:
-* appium -pa /wd/hub --use-plugins execute-driver
+```
+appium -pa /wd/hub --use-plugins execute-driver
+```

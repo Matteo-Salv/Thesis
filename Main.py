@@ -17,6 +17,24 @@ class jsonElements:
     buttonsToIgnore: str
 
 
+def resignWDA(udid):
+    print("warning: during the WebDriverAgent installation process it may be necessary to go to 'settings > general > "
+          "profile and device management' and then authorize the corresponding 'Apple Development' profile with which "
+          "the app was previously signed")
+    time.sleep(3)
+    print("starting resigning...")
+    currentDir = os.getcwd()
+    os.chdir(
+        "/Applications/Appium Server GUI.app/Contents/Resources/app/node_modules/appium/node_modules/appium-webdriveragent")
+    os.system("xcodebuild "
+              "-quiet "
+              "-project WebDriverAgent.xcodeproj "
+              "-scheme WebDriverAgentRunner "
+              f"-destination 'id={udid}' "
+              "-allowProvisioningUpdates")
+    os.chdir(currentDir)
+
+
 def readJson():
     f = open("caps.json")
     data: dict = json.load(f)
@@ -63,6 +81,17 @@ if __name__ == '__main__':
 
             if val == "n":
                 break
+
+        while True:
+             val = input("do you want to resign the WebDriverAgent [WDA] App? (y/n) [necessary only if Appium has some issues about WDA connection/installation]:")
+             if val == "y":
+                 print("## starting resign ##")
+                 resignWDA(jsonVals.udid)
+                 print("## resign completed ##")
+                 break
+
+             if val == "n":
+                 break
 
         print("## starting test ##")
         straceModule = sm.StraceModule()
