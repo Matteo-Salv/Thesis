@@ -4,5 +4,6 @@
   "app":"/Users/matteo/Desktop/App di esempio utilizzate (tutte firmate)/ThesisApp.app",
   "appName":"ThesisApp",
   "alertButtonsToAccept": "OK,ok,allow,Allow,Consentire",
-  "buttonsToIgnore": "Back"
+  "buttonsToIgnore": "Back",
+  "systemCallsListFile": "syscall.txt"
 }

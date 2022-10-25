@@ -25,10 +25,13 @@ class AppiumModule:
         self.alertButtonsToAccept = list()
         self.buttonsToIgnore = list()
         self.elementsToIgnore = ['XCUIElementTypeNavigationBar', 'XCUIElementTypeStaticText', 'XCUIElementTypeTextView',
-                            'XCUIElementTypeNavigationBar']
+                                 'XCUIElementTypeNavigationBar']
         self.appiumDriver: webdriver
         self.touchActions: TouchAction
 
+    def writeOnFile(self, text: str):
+        self.f.write(text)
+        self.f.flush()
 
     def currentTime(self) -> str:
         now = datetime.now()
@@ -36,7 +39,7 @@ class AppiumModule:
 
     def interactWithTextField(self, field):
         print(f"[Appium]: Interacting with a text field...")
-        self.f.write(f"[Appium {self.currentTime()}]: Interacting with a text field\n")
+        self.writeOnFile(f"[Appium {self.currentTime()}]: Interacting with a text field\n")
         field.send_keys("The answer is 42")
         if self.appiumDriver.is_keyboard_shown():
             root: eT._Element = eT.XML(self.appiumDriver.page_source.encode())
@@ -45,7 +48,8 @@ class AppiumModule:
             keyboard = root.find(".//XCUIElementTypeKeyboard")
             buttons = keyboard.findall('.//XCUIElementTypeButton')
             print(f"[Appium]: Interacting with '{buttons[len(buttons) - 1].get('name')}' on the keyboard")
-            self.f.write(f"[Appium {self.currentTime()}]: Interacting with '{buttons[len(buttons) - 1].get('name')}' on the keyboard\n")
+            self.writeOnFile(
+                f"[Appium {self.currentTime()}]: Interacting with '{buttons[len(buttons) - 1].get('name')}' on the keyboard\n")
             time.sleep(3)
             self.appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[len(buttons) - 1].get('name')).click()
 
@@ -58,7 +62,7 @@ class AppiumModule:
         for button in buttons:
             if button.get('name') in self.alertButtonsToAccept:
                 print("[Appium]: click on the button " + button.get('name'))
-                self.f.write(f"[Appium {self.currentTime()}]: click on the button {button.get('name')}\n")
+                self.writeOnFile(f"[Appium {self.currentTime()}]: click on the button {button.get('name')}\n")
                 button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=button.get('name'))
                 self.touchActions.tap(button).perform()
                 alreadyClicked = True
@@ -68,13 +72,13 @@ class AppiumModule:
         if not alreadyClicked:
             i = random.randint(0, len(buttons) - 1)
             print("[Appium]: click on " + buttons[i].get('name'))
-            self.f.write(f"[Appium {self.currentTime()}]: click on {buttons[i].get('name')}\n")
+            self.writeOnFile(f"[Appium {self.currentTime()}]: click on {buttons[i].get('name')}\n")
             button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[i].get('name'))
             self.touchActions.tap(button).perform()
 
     def interactWithSlider(self, slider):
         print(f"[Appium]: Interacting with a slider...")
-        self.f.write(f"[Appium {self.currentTime()}]: Interacting with a slider...\n")
+        self.writeOnFile(f"[Appium {self.currentTime()}]: Interacting with a slider...\n")
         self.touchActions.tap(slider).perform()
         value = random.randint(0, 100)
         print(f"setting slider to value {value}%")
@@ -90,7 +94,8 @@ class AppiumModule:
             self.interactWithSlider(element)
         else:
             print(f"[Appium]: interacting with '{element.text}', "f"type '{element.get_attribute('type')}'")
-            self.f.write(f"[Appium {self.currentTime()}]: interacting with '{element.text}', "f"type '{element.get_attribute('type')}'\n")
+            self.writeOnFile(
+                f"[Appium {self.currentTime()}]: interacting with '{element.text}', "f"type '{element.get_attribute('type')}'\n")
             self.touchActions.tap(element).perform()
 
     def startAppiumModule(self, desiredCaps, bundleID, alertButtonsToAccept: str, buttonsToIgnore: str):
@@ -105,12 +110,12 @@ class AppiumModule:
         accessibleElements = list()
         print("Appium module successfully started")
         print("[Appium]: connecting to the device...")
-        self.f.write(f"[Appium {self.currentTime()}]: connecting to the device...\n")
+        self.writeOnFile(f"[Appium {self.currentTime()}]: connecting to the device...\n")
         self.appiumDriver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desiredCaps)
         self.touchActions = TouchAction(self.appiumDriver)
         print("[Appium]: ...connection completed!")
-        self.f.write(f"[Appium {self.currentTime()}]: ...connection completed!\n")
-        time.sleep(5)
+        self.writeOnFile(f"[Appium {self.currentTime()}]: ...connection completed!\n")
+        time.sleep(10)
 
         while True:
             root: eT._Element = eT.XML(self.appiumDriver.page_source.encode())
@@ -123,7 +128,7 @@ class AppiumModule:
                 # alert found
                 if alert := root.find(".//XCUIElementTypeAlert"):
                     print(f"[Appium]: alert found: '{alert.get('name')}'")
-                    self.f.write(f"[Appium {self.currentTime()}]: alert found: '{alert.get('name')}'\n")
+                    self.writeOnFile(f"[Appium {self.currentTime()}]: alert found: '{alert.get('name')}'\n")
                     self.interactWithAlert(alert, root)
                     alreadyInteracted = True
 
@@ -135,7 +140,8 @@ class AppiumModule:
                             self.interactWithTextField(textField)
                         alreadyInteracted = True
                     else:
-                        print("[Appium]: Something went wrong. The keyboard is shown but there are not Text Fields. Closing...")
+                        print(
+                            "[Appium]: Something went wrong. The keyboard is shown but there are not Text Fields. Closing...")
                         sys.exit()
 
                 elif not alreadyInteracted:
@@ -146,7 +152,8 @@ class AppiumModule:
                     # add potential iteractive elements
                     for element in root.iter():
                         if element.get('accessible') == 'true' and element.get('enabled') == 'true' and element.get(
-                                'type') not in self.elementsToIgnore and element.get('name') not in self.buttonsToIgnore:
+                                'type') not in self.elementsToIgnore and element.get(
+                            'name') not in self.buttonsToIgnore:
                             if str(element.get('name')) != 'None':
                                 accessibleElements.append(AccessibleElement(element.get('name'), True))
                             else:
@@ -158,7 +165,8 @@ class AppiumModule:
                     if previousRoot is not None and eT.tostring(previousRoot) == eT.tostring(
                             root) and not alreadyGoneBack:
                         print("[Appium]: the previous interaction didn't work, going back...")
-                        self.f.write(f"[Appium {self.currentTime()}]: the previous interaction didn't work, going back...\n")
+                        self.writeOnFile(
+                            f"[Appium {self.currentTime()}]: the previous interaction didn't work, going back...\n")
                         self.appiumDriver.back()
                         alreadyGoneBack = True
 
@@ -172,7 +180,8 @@ class AppiumModule:
                                 self.interactWithElement(interactedElement, root)
                             else:
                                 print(f"[Appium]: Element '{accessibleElements[i].value}' not found!")
-                                self.f.write(f"[Appium {self.currentTime()}]: Element '{accessibleElements[i].value}' not found!\n")
+                                self.writeOnFile(
+                                    f"[Appium {self.currentTime()}]: Element '{accessibleElements[i].value}' not found!\n")
                         else:
                             if interactedElement := self.appiumDriver.find_elements(by=AppiumBy.CLASS_NAME,
                                                                                     value=accessibleElements[i].value):
@@ -186,24 +195,27 @@ class AppiumModule:
                                         interactedElement.remove(interactedElement[k])
                             else:
                                 print(f"[Appium]: Element {accessibleElements[i]} not found!")
-                                self.f.write(f"[Appium {self.currentTime()}]: Element {accessibleElements[i]} not found!\n")
+                                self.writeOnFile(
+                                    f"[Appium {self.currentTime()}]: Element {accessibleElements[i]} not found!\n")
                     else:
                         print("[Appium]: no accessible elements found!, going back to the previous view...")
-                        self.f.write(f"[Appium {self.currentTime()}]: no accessible elements found!, going back to the previous view...\n")
+                        self.writeOnFile(
+                            f"[Appium {self.currentTime()}]: no accessible elements found!, going back to the previous view...\n")
                         self.appiumDriver.back()
 
                     previousRoot = root
                     accessibleElements.clear()
                 alreadyInteracted = False
                 print("==== INTERACTION COMPLETED ====")
-                self.f.write(f"[Appium {self.currentTime()}]: ==== INTERACTION COMPLETED ====\n")
+                self.writeOnFile(f"[Appium {self.currentTime()}]: ==== INTERACTION COMPLETED ====\n")
                 # sleep che serve sia per sincronizzare l'interazione di appium che eventualmente permettere all'utente
                 # di interagire manualmente con l'app prima della prossima interazione
                 time.sleep(10)
 
             elif appState == 3 or appState == 2:
                 print("[Appium]: app is running in background, going back in foreground...")
-                self.f.write(f"[Appium {self.currentTime()}]: app is running in background, going back in foreground...\n")
+                self.writeOnFile(
+                    f"[Appium {self.currentTime()}]: app is running in background, going back in foreground...\n")
                 self.appiumDriver.activate_app(bundleID)
             else:
                 print("[Appium]: the app is not running, closing!")

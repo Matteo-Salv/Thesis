@@ -46,13 +46,16 @@ Example:
   "appName":"foo",
   "alertButtonsToAccept": "OK,ok,allow,Allow",
   "buttonsToIgnore": ""
+  "systemCallsFile": "syscall.txt"
 }
 ```
+inside systemCallsFile insert the name of the corresponding file containing all the syscalls you want to track and loaded inside
+"SystemCalls" folder. To understand how to format it, take a look on existing syscall.txt and syscall_edited.txt.
 ## Disclaimer
 This project has been developed and tested on a Intel Mac with macOS12 (Monterey).
 It should work with minimum effort on Apple Silicon, but there are no tests so far in this sense.
 
-the strace module is not developed by me, but mostly forked and edited from another project freely available on Github.
+the strace module has not been entirely developed by me, but partially forked and edited from another project freely available on Github.
 For more info, take a look on the corresponding LICENSE.
 ## Testing Environment:
 * iPhone 6s with iOS 14.4.2 semi-tethered jailbroken with checkra1n
