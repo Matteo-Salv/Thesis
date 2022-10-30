@@ -101,8 +101,9 @@ class AppiumModule:
     def startAppiumModule(self, desiredCaps, bundleID, alertButtonsToAccept: str, buttonsToIgnore: str):
         self.f = open("AppiumOutput.txt", "w")
         previousRoot = None
+        previousElementIndex = -1
         alreadyInteracted = False
-        alreadyGoneBack = False
+        # alreadyGoneBack = False
         if alertButtonsToAccept != "":
             self.alertButtonsToAccept = alertButtonsToAccept.split(',')
         if buttonsToIgnore != "":
@@ -163,17 +164,17 @@ class AppiumModule:
 
                     # check if the previous interaction worked
                     if previousRoot is not None and eT.tostring(previousRoot) == eT.tostring(
-                            root) and not alreadyGoneBack:
-                        print("[Appium]: the previous interaction didn't work, going back...")
-                        self.writeOnFile(
-                            f"[Appium {self.currentTime()}]: the previous interaction didn't work, going back...\n")
-                        self.appiumDriver.back()
-                        alreadyGoneBack = True
+                            root):
+                        if len(accessibleElements) > 1:
+                            print(f"[Appium]: the previous interaction didn't work, removing the element '{accessibleElements[i].value}'")
+                            self.writeOnFile(
+                                f"[Appium {self.currentTime()}]: the previous interaction didn't work, removing the element '{accessibleElements[i].value}'\n")
+                        accessibleElements.pop(previousElementIndex)
 
-                    elif len(accessibleElements) != 0:
-                        alreadyGoneBack = False
+                    if len(accessibleElements) != 0:
                         i = random.randint(0, len(accessibleElements) - 1)
                         print(f"[Appium]: Element '{accessibleElements[i].value}' selected")
+                        previousElementIndex = i
                         if accessibleElements[i].isByName:
                             if interactedElement := self.appiumDriver.find_element(by=AppiumBy.ID,
                                                                                    value=accessibleElements[i].value):

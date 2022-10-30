@@ -80,7 +80,7 @@ xcodebuild -project WebDriverAgent.xcodeproj -scheme WebDriverAgentRunner -desti
 ```
 The WebDriverAgent folder is the following:
 ```
-/Users/matteo/.appium/node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent
+/Users/*user*/.appium/node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent
 ```
 After that, to run Appium:
 ```

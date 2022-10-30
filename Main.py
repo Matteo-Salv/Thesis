@@ -17,17 +17,25 @@ class jsonElements:
     alertButtonsToAccept: str
     buttonsToIgnore: str
     sysCallsFile: str
+    wdaDir: str
+
+    def __post_init__(self):
+        if self.wdaDir is None:
+            self.wdaDir = ""
+        if self.alertButtonsToAccept is None:
+            self.alertButtonsToAccept = ""
+        if self.buttonsToIgnore is None:
+            self.buttonsToIgnore = ""
 
 
-def resignWDA(udid):
+def resignWDA(udid, wdaDir):
     print("warning: during the WebDriverAgent installation process it may be necessary to go to 'settings > general > "
           "profile and device management' and then authorize the corresponding 'Apple Development' profile with which "
           "the app was previously signed")
     time.sleep(3)
     print("starting resigning...")
     currentDir = os.getcwd()
-    os.chdir(
-        "/Applications/Appium Server GUI.app/Contents/Resources/app/node_modules/appium/node_modules/appium-webdriveragent")
+    os.chdir(wdaDir)
     os.system("xcodebuild "
               "-quiet "
               "-project WebDriverAgent.xcodeproj "
@@ -41,8 +49,8 @@ def readJson():
     f = open("caps.json")
     data: dict = json.load(f)
 
-    if {"version", "device", "udid", "appName", "app", "alertButtonsToAccept", "buttonsToIgnore",
-        "systemCallsListFile"} == data.keys():
+    if all(elem in data for elem in ("version", "device", "udid", "appName", "app", "systemCallsListFile")):
+    # if {"version", "device", "udid", "appName", "app", "systemCallsListFile"} in data.keys():
         desired_caps = dict(
             platformName='iOS',
             platformVersion=data["version"],
@@ -53,9 +61,9 @@ def readJson():
             noReset="true"
         )
         return jsonElements(desired_caps, data["appName"], data["udid"], data["app"], data["alertButtonsToAccept"],
-                            data["buttonsToIgnore"], data["systemCallsListFile"])
+                            data["buttonsToIgnore"], data["systemCallsListFile"], data["wdaDir"])
     else:
-        print("error! missing arguments inside caps.json! Follow the instruction!")
+        print("error! missing mandatory arguments inside caps.json! Follow the instruction!")
         return None
 
 
@@ -87,17 +95,20 @@ if __name__ == '__main__':
             if val == "n":
                 break
 
-        while True:
-            val = input(
-                "do you want to resign the WebDriverAgent [WDA] App? (y/n) [necessary only if Appium has some issues about WDA connection/installation]:")
-            if val == "y":
-                print("## starting resign ##")
-                resignWDA(jsonVals.udid)
-                print("## resign completed ##")
-                break
+        if jsonVals.wdaDir != "":
+            while True:
+                val = input(
+                    "do you want to resign the WebDriverAgent [WDA] App? (y/n) [necessary only if Appium has some issues about WDA connection/installation]:")
+                if val == "y":
+                    print("## starting resign ##")
+                    resignWDA(jsonVals.udid, jsonVals.wdaDir)
+                    print("## resign completed ##")
+                    break
 
-            if val == "n":
-                break
+                if val == "n":
+                    break
+        else:
+            print("wda directory ('wdaDir' property) not specified inside json options file, skipping WDA installation")
 
         print("## starting test ##")
         straceModule = sm.StraceModule()
