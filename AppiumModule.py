@@ -103,7 +103,6 @@ class AppiumModule:
         previousRoot = None
         previousElementIndex = -1
         alreadyInteracted = False
-        # alreadyGoneBack = False
         if alertButtonsToAccept != "":
             self.alertButtonsToAccept = alertButtonsToAccept.split(',')
         if buttonsToIgnore != "":
@@ -116,7 +115,7 @@ class AppiumModule:
         self.touchActions = TouchAction(self.appiumDriver)
         print("[Appium]: ...connection completed!")
         self.writeOnFile(f"[Appium {self.currentTime()}]: ...connection completed!\n")
-        time.sleep(10)
+        time.sleep(30)  # mandatory because while frida tries to inject inside the app it is not interactible
 
         while True:
             root: eT._Element = eT.XML(self.appiumDriver.page_source.encode())
