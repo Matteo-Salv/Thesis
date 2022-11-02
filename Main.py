@@ -26,6 +26,8 @@ class jsonElements:
             self.alertButtonsToAccept = ""
         if self.buttonsToIgnore is None:
             self.buttonsToIgnore = ""
+        if self.app is None:
+            self.app = ""
 
 
 def resignWDA(udid, wdaDir):
@@ -48,9 +50,13 @@ def resignWDA(udid, wdaDir):
 def readJson():
     f = open("caps.json")
     data: dict = json.load(f)
+    mandatoryOptions = ["version", "device", "udid", "appName", "systemCallsListFile"]
+    notMandatoryOptions = ["app", "alertButtonsToAccept", "buttonsToIgnore", "wdaDir"]
 
-    if all(elem in data for elem in ("version", "device", "udid", "appName", "app", "systemCallsListFile")):
-    # if {"version", "device", "udid", "appName", "app", "systemCallsListFile"} in data.keys():
+    if all(elem in data for elem in mandatoryOptions):
+        for notMandatoryOption in notMandatoryOptions:
+            if notMandatoryOption not in data:
+                data[notMandatoryOption] = None
         desired_caps = dict(
             platformName='iOS',
             platformVersion=data["version"],
@@ -79,21 +85,19 @@ if __name__ == '__main__':
     if readJson() is not None:
         jsonVals = readJson()
 
-        while True:
-            val = input("do you want to install the app? (y/n)")
-            if val == "y":
-                if jsonVals.app == "":
-                    print(
-                        "error: 'app' is empty in the configuration file. Please check caps.json and run this program again")
-                    sys.exit()
-                else:
+        if jsonVals.app != "":
+            while True:
+                val = input("do you want to install the app? (y/n)")
+                if val == "y":
                     print("## starting installation ##")
                     installApp(jsonVals.app, jsonVals.udid)
                     print("## installation completed ##")
-                break
+                    break
 
-            if val == "n":
-                break
+                elif val == "n":
+                    break
+        else:
+            print("-- directory to .app or .ipa ('app' option) empty or missing in the configuration file. Skipping installation phase")
 
         if jsonVals.wdaDir != "":
             while True:
@@ -108,7 +112,15 @@ if __name__ == '__main__':
                 if val == "n":
                     break
         else:
-            print("wda directory ('wdaDir' property) not specified inside json options file, skipping WDA installation")
+            print("-- wda directory ('wdaDir' option) empty or missing in the configuration file, skipping WDA installation")
+
+        if jsonVals.alertButtonsToAccept == "":
+            print("-- buttons to automatically accept inside an alert ('alertButtonsToAccept' option), empty or missing in the configuration file."
+                  "the buttons inside an alert will be randomly selected")
+
+        if jsonVals.buttonsToIgnore == "":
+            print("-- buttons to ignore ('buttonsToIgnore' option empty or missing in the configuration file."
+                  "every button inside the app could be potentially selected")
 
         print("## starting test ##")
         straceModule = sm.StraceModule()
