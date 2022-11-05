@@ -59,15 +59,16 @@ class AppiumModule:
             self.interactWithTextField(field)
         buttons = alert.findall('.//XCUIElementTypeButton')
         alreadyClicked = False
-        for button in buttons:
-            if button.get('name') in self.alertButtonsToAccept:
-                print("[Appium]: click on the button " + button.get('name'))
-                self.writeOnFile(f"[Appium {self.currentTime()}]: click on the button {button.get('name')}\n")
-                button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=button.get('name'))
-                self.touchActions.tap(button).perform()
-                alreadyClicked = True
-                break
-                # TODO: da testare, a volte si blocca dopo aver cliccato un tasto tra quelli da accettare in automatico
+        if len(self.alertButtonsToAccept) > 0:
+            for button in buttons:
+                if button.get('name') in self.alertButtonsToAccept:
+                    print("[Appium]: click on the button " + button.get('name'))
+                    self.writeOnFile(f"[Appium {self.currentTime()}]: click on the button {button.get('name')}\n")
+                    button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=button.get('name'))
+                    self.touchActions.tap(button).perform()
+                    alreadyClicked = True
+                    break
+                    # TODO: da testare, a volte si blocca dopo aver cliccato un tasto tra quelli da accettare in automatico
 
         if not alreadyClicked:
             i = random.randint(0, len(buttons) - 1)
