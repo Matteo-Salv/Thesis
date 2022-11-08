@@ -12,6 +12,7 @@ class StraceModule:
         self.f_output = open("StraceOutput.txt", "w")
         self.session = None
         self.device = None
+        self.pid = None
 
     def createSysCallsList(self, sysCallsFileName) -> bool:
         with open(os.getcwd() + "/SystemCalls/" + sysCallsFileName, "r") as f:
@@ -59,22 +60,21 @@ class StraceModule:
             return None
         appIdentifier: str = None
         apps = self.device.enumerate_applications()
-        global pid
         for app in apps:
             if appName == app.name:
                 appIdentifier: str = app.identifier
-                pid = app.identifier
+                self.pid = app.identifier
                 break
         if appIdentifier is None:
             print(f"[strace]: Error! {appName} not found! Is it installed?")
             return None
         else:
             print("Strace module successfully started")
-            pid = self.device.spawn([appIdentifier])
-            print(f"[strace]: pid {pid}")
-            self.f_output.write(f"[strace {self.currentTime()}]: pid {pid}\n")
+            self.pid = self.device.spawn([appIdentifier])
+            print(f"[strace]: pid {self.pid}")
+            self.f_output.write(f"[strace {self.currentTime()}]: pid {self.pid}\n")
             self.f_output.flush()
-            self.session = self.device.attach(pid)
+            self.session = self.device.attach(self.pid)
             self.session.on('detached', self.on_detached)
         print("App started!")
         return appIdentifier
@@ -85,5 +85,5 @@ class StraceModule:
         script = self.session.create_script(tracer_source)
         script.load()
         script.on("message", self.on_message)
-        self.device.resume(pid)
+        self.device.resume(self.pid)
         sys.stdin.read()
