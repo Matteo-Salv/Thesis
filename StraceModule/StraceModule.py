@@ -63,7 +63,6 @@ class StraceModule:
         for app in apps:
             if appName == app.name:
                 appIdentifier: str = app.identifier
-                self.pid = app.identifier
                 break
         if appIdentifier is None:
             print(f"[strace]: Error! {appName} not found! Is it installed?")
