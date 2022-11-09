@@ -8,7 +8,8 @@ class StraceModule:
     def __init__(self):
         self.syscalls = None
         self.syscalls = None
-        self.previousMessage = ""
+        self.previousMessage = "_"
+        self.thisMessage = ""
         self.f_output = open("StraceOutput.txt", "w")
         self.session = None
         self.device = None
@@ -36,12 +37,14 @@ class StraceModule:
         # message[] viene utilizzato per leggere la stringa json inviata dalla funzione send in JS.
         thread_id, syscall_number = message["payload"].split(":")
         syscall_number = str(abs(int(syscall_number)))
-        thisMessage = f"[Strace {self.currentTime()}]: [thread {thread_id}]: {self.syscalls[syscall_number]}"
-        if syscall_number in self.syscalls.keys() and self.previousMessage != thisMessage:
-            print(thisMessage)
-            self.writeOnFile(thisMessage)
+        if syscall_number in self.syscalls.keys():
+            self.thisMessage = f"[Strace {self.currentTime()}]: [thread {thread_id}]: {self.syscalls[syscall_number]}"
+        if self.previousMessage != self.thisMessage:
+            print(self.thisMessage)
+            self.writeOnFile(self.thisMessage)
             # necessary in order to ignore any eventually repeated message
-            self.previousMessage = thisMessage
+            self.previousMessage = self.thisMessage
+
 
     def on_detached(self):
         sys.exit()

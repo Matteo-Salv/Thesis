@@ -37,26 +37,40 @@ class AppiumModule:
         now = datetime.now()
         return now.strftime("%H:%M:%S")
 
+    def interactWithLastKeyboardButton(self):
+        root: eT._Element = eT.XML(self.appiumDriver.page_source.encode())
+        # necessario altrimenti Appium potrebbe non vedere la tastiera
+        time.sleep(5)
+        keyboard = root.find(".//XCUIElementTypeKeyboard")
+        buttons = keyboard.findall('.//XCUIElementTypeButton')
+        print(f"[Appium]: Interacting with '{buttons[len(buttons) - 1].get('name')}' on the keyboard")
+        self.writeOnFile(
+            f"[Appium {self.currentTime()}]: Interacting with '{buttons[len(buttons) - 1].get('name')}' on the keyboard\n")
+        time.sleep(3)
+        self.appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[len(buttons) - 1].get('name')).click()
+
     def interactWithTextField(self, field):
         print(f"[Appium]: Interacting with a text field...")
         self.writeOnFile(f"[Appium {self.currentTime()}]: Interacting with a text field\n")
         field.send_keys("The answer is 42")
         if self.appiumDriver.is_keyboard_shown():
-            root: eT._Element = eT.XML(self.appiumDriver.page_source.encode())
-            # necessario altrimenti Appium potrebbe non vedere la tastiera
-            time.sleep(5)
-            keyboard = root.find(".//XCUIElementTypeKeyboard")
-            buttons = keyboard.findall('.//XCUIElementTypeButton')
-            print(f"[Appium]: Interacting with '{buttons[len(buttons) - 1].get('name')}' on the keyboard")
-            self.writeOnFile(
-                f"[Appium {self.currentTime()}]: Interacting with '{buttons[len(buttons) - 1].get('name')}' on the keyboard\n")
-            time.sleep(3)
-            self.appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[len(buttons) - 1].get('name')).click()
+            self.interactWithLastKeyboardButton()
 
-    def interactWithAlert(self, alert, root):
-        if textField := root.find(".//XCUIElementTypeTextField"):
-            field = self.appiumDriver.find_element(by=AppiumBy.NAME, value=textField.get('name'))
-            self.interactWithTextField(field)
+    def interactWithAlert(self, alert):
+        elemList = []
+        for elem in alert.iter():
+            elemList.append(elem.tag)
+        if 'XCUIElementTypeTextField' in elemList:
+            textFields = self.appiumDriver.find_elements(by=AppiumBy.CLASS_NAME, value='XCUIElementTypeTextField')
+            message = None
+            if numbFields := len(textFields) > 1:
+                message = f": found {numbFields} text fields inside the view! Interacting with them..."
+            else:
+                message = f":{numbFields} text field found inside the view! Interacting with it..."
+            print(f"[Appium]{message}")
+            self.writeOnFile(f"[Appium {self.currentTime()}{message}")
+            for textField in textFields:
+                textField.send_keys("The answer is 42")
         buttons = alert.findall('.//XCUIElementTypeButton')
         alreadyClicked = False
         if len(self.alertButtonsToAccept) > 0:
@@ -68,27 +82,28 @@ class AppiumModule:
                     self.touchActions.tap(button).perform()
                     alreadyClicked = True
                     break
-                    # TODO: da testare, a volte si blocca dopo aver cliccato un tasto tra quelli da accettare in automatico
-
         if not alreadyClicked:
             i = random.randint(0, len(buttons) - 1)
             print("[Appium]: click on " + buttons[i].get('name'))
             self.writeOnFile(f"[Appium {self.currentTime()}]: click on {buttons[i].get('name')}\n")
             button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[i].get('name'))
             self.touchActions.tap(button).perform()
+        if self.appiumDriver.is_keyboard_shown():
+            self.interactWithLastKeyboardButton()
 
     def interactWithSlider(self, slider):
         print(f"[Appium]: Interacting with a slider...")
         self.writeOnFile(f"[Appium {self.currentTime()}]: Interacting with a slider...\n")
         self.touchActions.tap(slider).perform()
         value = random.randint(0, 100)
-        print(f"setting slider to value {value}%")
+        print(f"[Appium]: setting slider to value {value}%")
+        self.writeOnFile(f"[Appium {self.currentTime()}] setting slider to value {value}%")
         if value == 100:
             slider.set_value(str(1))
         else:
             slider.set_value("0." + str(value))
 
-    def interactWithElement(self, element, root):
+    def interactWithElement(self, element):
         if str(element.get_attribute("type")) == "XCUIElementTypeTextField":
             self.interactWithTextField(element)
         elif str(element.get_attribute("type")) == "XCUIElementTypeSlider":
@@ -130,13 +145,12 @@ class AppiumModule:
                 if alert := root.find(".//XCUIElementTypeAlert"):
                     print(f"[Appium]: alert found: '{alert.get('name')}'")
                     self.writeOnFile(f"[Appium {self.currentTime()}]: alert found: '{alert.get('name')}'\n")
-                    self.interactWithAlert(alert, root)
+                    self.interactWithAlert(alert)
                     alreadyInteracted = True
 
                 # check if the keyboard is shown
                 elif self.appiumDriver.is_keyboard_shown():
-                    if textFields := self.appiumDriver.find_elements(by=AppiumBy.XPATH,
-                                                                     value='//XCUIElementTypeTextField'):
+                    if textFields := self.appiumDriver.find_elements(by=AppiumBy.CLASS_NAME, value='XCUIElementTypeTextField'):
                         for textField in textFields:
                             self.interactWithTextField(textField)
                         alreadyInteracted = True
@@ -178,7 +192,7 @@ class AppiumModule:
                         if accessibleElements[i].isByName:
                             if interactedElement := self.appiumDriver.find_element(by=AppiumBy.ID,
                                                                                    value=accessibleElements[i].value):
-                                self.interactWithElement(interactedElement, root)
+                                self.interactWithElement(interactedElement)
                             else:
                                 print(f"[Appium]: Element '{accessibleElements[i].value}' not found!")
                                 self.writeOnFile(
@@ -190,7 +204,7 @@ class AppiumModule:
                                 while not interacted and len(interactedElement) > 0:
                                     k = random.randint(0, len(interactedElement) - 1)
                                     if interactedElement[k].get_attribute('accessible') == 'true':
-                                        self.interactWithElement(interactedElement[k], root)
+                                        self.interactWithElement(interactedElement[k])
                                         interacted = True
                                     else:
                                         interactedElement.remove(interactedElement[k])

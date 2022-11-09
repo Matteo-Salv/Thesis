@@ -3,7 +3,7 @@
   "udid":"c5b7903056d30974db4cc14eb07617196735dc75",
   "app":"/Users/matteo/Desktop/App di esempio utilizzate (tutte firmate)/ThesisApp.app",
   "appName":"ThesisApp",
-  "alertButtonsToAccept": "OK,ok,allow,Allow,Consentire",
+  "alertButtonsToAccept": "OK,ok,allow,Allow,Consentire,Confirm",
   "buttonsToIgnore": "Back",
   "systemCallsListFile": "syscall.txt",
   "wdaDir": "/Users/matteo/.appium/node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent"
