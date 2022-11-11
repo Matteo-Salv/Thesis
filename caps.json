@@ -4,7 +4,8 @@
   "app":"/Users/matteo/Desktop/App di esempio utilizzate (tutte firmate)/ThesisApp.app",
   "appName":"ThesisApp",
   "alertButtonsToAccept": "OK,ok,allow,Allow,Consentire,Confirm",
-  "buttonsToIgnore": "Back",
+  "buttonsToIgnore": "",
   "systemCallsListFile": "syscall.txt",
-  "wdaDir": "/Users/matteo/.appium/node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent"
+  "wdaDir": "/Users/matteo/.appium/node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent",
+  "timeout": 300
 }

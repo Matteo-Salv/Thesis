@@ -18,6 +18,7 @@ class jsonElements:
     buttonsToIgnore: str
     sysCallsFile: str
     wdaDir: str
+    timeout: int
 
     def __post_init__(self):
         if self.wdaDir is None:
@@ -28,6 +29,8 @@ class jsonElements:
             self.buttonsToIgnore = ""
         if self.app is None:
             self.app = ""
+        if self.timeout is None:
+            self.timeout = 600 # 10 mins
 
 
 def resignWDA(udid, wdaDir):
@@ -67,7 +70,7 @@ def readJson():
             noReset="true"
         )
         return jsonElements(desired_caps, data["appName"], data["udid"], data["app"], data["alertButtonsToAccept"],
-                            data["buttonsToIgnore"], data["systemCallsListFile"], data["wdaDir"])
+                            data["buttonsToIgnore"], data["systemCallsListFile"], data["wdaDir"], data["timeout"])
     else:
         print("error! missing mandatory arguments inside caps.json! Follow the instruction!")
         return None
@@ -131,9 +134,11 @@ if __name__ == '__main__':
                                           args=(jsonVals.desiredCaps, appIdentifier, jsonVals.alertButtonsToAccept,
                                                 jsonVals.buttonsToIgnore))
             appiumModuleProcess.start()
-            straceModule.startStraceModule()
+            straceModule.startStraceModule(jsonVals.timeout)
+            print("Timeout reached!")
+            appiumModuleProcess.terminate()
             appiumModuleProcess.join()
-            print("closing...")
-            sys.exit()
+            print("closing project")
     else:
         print("closing...")
+

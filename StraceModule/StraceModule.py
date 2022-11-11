@@ -1,6 +1,8 @@
+import time
 from datetime import datetime
 import os
 import frida
+import inspect
 import sys
 
 
@@ -81,11 +83,14 @@ class StraceModule:
         print("App started!")
         return appIdentifier
 
-    def startStraceModule(self):
+    def startStraceModule(self, timeout):
+        starting_time = time.time()
         with open(os.getcwd() + "/StraceModule/tracer.js", "r") as f:
             tracer_source = f.read()
         script = self.session.create_script(tracer_source)
         script.load()
         script.on("message", self.on_message)
-        self.device.resume(self.pid)
-        sys.stdin.read()
+        while time.time() - starting_time < timeout:
+            self.device.resume(self.pid)
+            # sys.stdin.read()
+        self.device.kill(self.pid)
