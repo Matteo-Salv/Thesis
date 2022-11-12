@@ -51,6 +51,7 @@ function ThreadStalker() {
             if (isThreadFollowed(this.threadId)) {
                 return;
             }
+            // console.log("strace, args[2]: " + args[2]);
             const functionAddress = args[2];
             Interceptor.attach(functionAddress, {
                 onEnter(args) {
