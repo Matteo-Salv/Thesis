@@ -34,6 +34,9 @@ Filza tweak (available on Cydia) or Cydia Impactor (only with a Paid developer p
    * appName = the name of the application
    * alertButtonsToAccept = the name of the buttons inside an alert you want to automatically accept, separated by a ','
    * buttonsToIgnore = the name of the buttons you want to ignore, separated by a ','
+   * systemCallsFile = the file containing the system calls to track
+   * wdaDir = path to appium-webdriveragent (mandatory only if necessary to manually install WDA)
+   * timeout = default 600s
    
    please note that *version, udid and appName* are mandatory. If you don't want to set the other options, you can 
 leave them blank.
@@ -46,7 +49,9 @@ Example:
   "appName":"foo",
   "alertButtonsToAccept": "OK,ok,allow,Allow",
   "buttonsToIgnore": ""
-  "systemCallsFile": "syscall.txt"
+  "systemCallsFile": "syscall.txt",
+  "wdaDir": "/Users/user/.appium/node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent",
+  "timeout": 180
 }
 ```
 inside systemCallsFile insert the name of the corresponding file containing all the syscalls you want to track and loaded inside
