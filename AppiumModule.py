@@ -5,7 +5,8 @@ from lxml import etree as eT
 from dataclasses import dataclass
 from datetime import datetime
 import random
-import sys
+import os
+import signal
 import time
 import warnings
 
@@ -79,7 +80,8 @@ class AppiumModule:
                     print("[Appium]: click on the button " + button.get('name'))
                     self.writeOnFile(f"[Appium {self.currentTime()}]: click on the button {button.get('name')}\n")
                     button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=button.get('name'))
-                    self.touchActions.tap(button).perform()
+                    # self.touchActions.tap(button).perform()
+                    button.click()
                     alreadyClicked = True
                     break
         if not alreadyClicked:
@@ -87,8 +89,9 @@ class AppiumModule:
             print("[Appium]: click on " + buttons[i].get('name'))
             self.writeOnFile(f"[Appium {self.currentTime()}]: click on {buttons[i].get('name')}\n")
             button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[i].get('name'))
-            self.touchActions.tap(button).perform()
-        if self.appiumDriver.is_keyboard_shown():
+            # self.touchActions.tap(button).perform()
+            button.click()
+        if self.appiumDriver.is_keyboard_shown() and len(self.alertButtonsToAccept) == 0:
             self.interactWithLastKeyboardButton()
 
     def interactWithSlider(self, slider):
@@ -131,7 +134,7 @@ class AppiumModule:
         self.touchActions = TouchAction(self.appiumDriver)
         print("[Appium]: ...connection completed!")
         self.writeOnFile(f"[Appium {self.currentTime()}]: ...connection completed!\n")
-        time.sleep(30)  # mandatory because while frida tries to inject inside the app it is not interactible
+        time.sleep(15)  # mandatory because while frida tries to inject inside the app it is not interactible
 
         while True:
             root: eT._Element = eT.XML(self.appiumDriver.page_source.encode())
@@ -154,10 +157,10 @@ class AppiumModule:
                         for textField in textFields:
                             self.interactWithTextField(textField)
                         alreadyInteracted = True
-                    else:
-                        print(
-                            "[Appium]: Something went wrong. The keyboard is shown but there are not Text Fields. Closing...")
-                        sys.exit()
+                    elif root.find(".//XCUIElementTypeKeyboard") is not None:   # double check, sometimes is_keyboard_shown() raise a false positive
+                        self.interactWithElement()
+                        self.interactWithLastKeyboardButton()
+                        alreadyInteracted = True
 
                 elif not alreadyInteracted:
                     # delete status bar
@@ -183,7 +186,7 @@ class AppiumModule:
                             print(f"[Appium]: the previous interaction didn't work, removing the element '{accessibleElements[i].value}'")
                             self.writeOnFile(
                                 f"[Appium {self.currentTime()}]: the previous interaction didn't work, removing the element '{accessibleElements[i].value}'\n")
-                        accessibleElements.pop(previousElementIndex)
+                            accessibleElements.pop(previousElementIndex)
 
                     if len(accessibleElements) != 0:
                         i = random.randint(0, len(accessibleElements) - 1)
@@ -234,4 +237,4 @@ class AppiumModule:
                 self.appiumDriver.activate_app(bundleID)
             else:
                 print("[Appium]: the app is not running, closing!")
-                sys.exit()
+                os.kill(os.getppid(), signal.SIGTERM)

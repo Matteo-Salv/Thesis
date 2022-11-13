@@ -1,11 +1,11 @@
 {"version":"14.4",
   "device":"iPhone 6s",
   "udid":"c5b7903056d30974db4cc14eb07617196735dc75",
-  "app":"/Users/matteo/Desktop/App di esempio utilizzate (tutte firmate)/ThesisApp.app",
-  "appName":"ThesisApp",
+  "app":"/Users/matteo/Desktop/App di esempio utilizzate (tutte firmate)/Tinder.app",
+  "appName":"Tinder++",
   "alertButtonsToAccept": "OK,ok,allow,Allow,Consentire,Confirm",
   "buttonsToIgnore": "",
-  "systemCallsListFile": "syscall.txt",
+  "systemCallsListFile": "syscall_edited.txt",
   "wdaDir": "/Users/matteo/.appium/node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent",
-  "timeout": 60
+  "timeout": 180
 }

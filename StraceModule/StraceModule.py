@@ -2,7 +2,6 @@ import time
 from datetime import datetime
 import os
 import frida
-import inspect
 import sys
 
 
@@ -58,7 +57,7 @@ class StraceModule:
                 return True
         return False
 
-    def appConnection(self, appName) -> str:
+    def appConnection(self, appName):
         self.device = frida.get_usb_device()
         if self.appIsAlreadyRunning(appName):
             print("Error! App must be manually closed on the device! Please check and then run again!")
@@ -83,14 +82,11 @@ class StraceModule:
         print("App started!")
         return appIdentifier
 
-    def startStraceModule(self, timeout):
-        starting_time = time.time()
+    def startStraceModule(self):
         with open(os.getcwd() + "/StraceModule/tracer.js", "r") as f:
             tracer_source = f.read()
         script = self.session.create_script(tracer_source)
         script.load()
         script.on("message", self.on_message)
-        while time.time() - starting_time < timeout:
-            self.device.resume(self.pid)
-            # sys.stdin.read()
-        self.device.kill(self.pid)
+        self.device.resume(self.pid)
+        sys.stdin.read()

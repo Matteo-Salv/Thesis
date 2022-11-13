@@ -1,6 +1,6 @@
 import json
 import os
-import sys
+import signal
 import time
 from dataclasses import dataclass
 import StraceModule.StraceModule as sm
@@ -50,6 +50,16 @@ def resignWDA(udid, wdaDir):
     os.chdir(currentDir)
 
 
+def timeout(timeout):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        time.sleep(1)
+    print("timeout reached!")
+    print("closing...")
+    os.kill(os.getppid(), signal.SIGTERM)
+
+
+
 def readJson():
     f = open("caps.json")
     data: dict = json.load(f)
@@ -66,7 +76,7 @@ def readJson():
             deviceName=data["device"],
             automationName='xcuitest',
             udid=data["udid"],
-            wdaLaunchTimeout="120000",
+            # wdaLaunchTimeout="120000",
             noReset="true"
         )
         return jsonElements(desired_caps, data["appName"], data["udid"], data["app"], data["alertButtonsToAccept"],
@@ -125,7 +135,7 @@ if __name__ == '__main__':
             print("-- buttons to ignore ('buttonsToIgnore' option empty or missing in the configuration file."
                   "every button inside the app could be potentially selected")
 
-        print("## starting test ##")
+        print(f"## starting test, timeout: {jsonVals.timeout}s ##")
         straceModule = sm.StraceModule()
         appIdentifier = straceModule.appConnection(jsonVals.appName)
         appiumModule = am.AppiumModule()
@@ -133,11 +143,13 @@ if __name__ == '__main__':
             appiumModuleProcess = Process(target=appiumModule.startAppiumModule,
                                           args=(jsonVals.desiredCaps, appIdentifier, jsonVals.alertButtonsToAccept,
                                                 jsonVals.buttonsToIgnore))
+            timeoutProcess = Process(target=timeout, args=(jsonVals.timeout,))
             appiumModuleProcess.start()
-            straceModule.startStraceModule(jsonVals.timeout)
-            print("Timeout reached!")
+            timeoutProcess.start()
+            straceModule.startStraceModule()
             appiumModuleProcess.terminate()
             appiumModuleProcess.join()
+            timeoutProcess.join()
             print("closing project")
     else:
         print("closing...")
