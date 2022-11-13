@@ -7,7 +7,6 @@ desired_caps = dict(
 	deviceName='iPhone 6s',
 	automationName='xcuitest',
 	udid='c5b7903056d30974db4cc14eb07617196735dc75',
-	app='/Users/matteo/Desktop/App di esempio utilizzate (tutte firmate)/ThesisApp.app'
 )
 
 driver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desired_caps)

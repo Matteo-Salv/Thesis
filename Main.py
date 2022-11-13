@@ -114,8 +114,9 @@ if __name__ == '__main__':
 
         if jsonVals.wdaDir != "":
             while True:
-                val = input(
-                    "do you want to resign the WebDriverAgent [WDA] App? (y/n) [necessary only if Appium has some issues about WDA connection/installation]:")
+                val = input("do you want to resign the WebDriverAgent [WDA] App? (y/n) [necessary only if Appium has some issues about WDA connection/installation]:")
+                # val = "n"
+
                 if val == "y":
                     print("## starting resign ##")
                     resignWDA(jsonVals.udid, jsonVals.wdaDir)

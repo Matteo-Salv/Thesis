@@ -50,9 +50,9 @@ class AppiumModule:
         time.sleep(3)
         self.appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[len(buttons) - 1].get('name')).click()
 
-    def interactWithTextField(self, field):
-        print(f"[Appium]: Interacting with a text field...")
-        self.writeOnFile(f"[Appium {self.currentTime()}]: Interacting with a text field\n")
+    def interactWithTextField(self, field, type):
+        print(f"[Appium]: Interacting with a {type} field...")
+        self.writeOnFile(f"[Appium {self.currentTime()}]: Interacting with a {type} field\n")
         field.send_keys("The answer is 42")
         if self.appiumDriver.is_keyboard_shown():
             self.interactWithLastKeyboardButton()
@@ -73,26 +73,30 @@ class AppiumModule:
             for textField in textFields:
                 textField.send_keys("The answer is 42")
         buttons = alert.findall('.//XCUIElementTypeButton')
-        alreadyClicked = False
-        if len(self.alertButtonsToAccept) > 0:
-            for button in buttons:
-                if button.get('name') in self.alertButtonsToAccept:
-                    print("[Appium]: click on the button " + button.get('name'))
-                    self.writeOnFile(f"[Appium {self.currentTime()}]: click on the button {button.get('name')}\n")
-                    button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=button.get('name'))
-                    # self.touchActions.tap(button).perform()
-                    button.click()
-                    alreadyClicked = True
-                    break
-        if not alreadyClicked:
-            i = random.randint(0, len(buttons) - 1)
-            print("[Appium]: click on " + buttons[i].get('name'))
-            self.writeOnFile(f"[Appium {self.currentTime()}]: click on {buttons[i].get('name')}\n")
-            button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[i].get('name'))
-            # self.touchActions.tap(button).perform()
-            button.click()
-        if self.appiumDriver.is_keyboard_shown() and len(self.alertButtonsToAccept) == 0:
-            self.interactWithLastKeyboardButton()
+        if len(buttons) > 0:
+            alreadyClicked = False
+            if len(self.alertButtonsToAccept) > 0:
+                for button in buttons:
+                    if button.get('name') in self.alertButtonsToAccept:
+                        print("[Appium]: click on the button " + button.get('name'))
+                        self.writeOnFile(f"[Appium {self.currentTime()}]: click on the button {button.get('name')}\n")
+                        button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=button.get('name'))
+                        # self.touchActions.tap(button).perform()
+                        button.click()
+                        alreadyClicked = True
+                        break
+            if not alreadyClicked:
+                i = random.randint(0, len(buttons) - 1)
+                print("[Appium]: click on " + buttons[i].get('name'))
+                self.writeOnFile(f"[Appium {self.currentTime()}]: click on {buttons[i].get('name')}\n")
+                button = self.appiumDriver.find_element(by=AppiumBy.NAME, value=buttons[i].get('name'))
+                # self.touchActions.tap(button).perform()
+                button.click()
+            if self.appiumDriver.is_keyboard_shown() and len(self.alertButtonsToAccept) == 0:
+                self.interactWithLastKeyboardButton()
+        else:
+            print(f"alert '{alert.get('name')}' not interactable, skipping interactions...")
+            self.writeOnFile(f"alert '{alert.get('name')}' not interactable, skipping interactions...")
 
     def interactWithSlider(self, slider):
         print(f"[Appium]: Interacting with a slider...")
@@ -108,7 +112,7 @@ class AppiumModule:
 
     def interactWithElement(self, element):
         if str(element.get_attribute("type")) == "XCUIElementTypeTextField":
-            self.interactWithTextField(element)
+            self.interactWithTextField(element, "text")
         elif str(element.get_attribute("type")) == "XCUIElementTypeSlider":
             self.interactWithSlider(element)
         else:
@@ -155,11 +159,11 @@ class AppiumModule:
                 elif self.appiumDriver.is_keyboard_shown():
                     if textFields := self.appiumDriver.find_elements(by=AppiumBy.CLASS_NAME, value='XCUIElementTypeTextField'):
                         for textField in textFields:
-                            self.interactWithTextField(textField)
+                            self.interactWithTextField(textField, "text")
                         alreadyInteracted = True
-                    elif root.find(".//XCUIElementTypeKeyboard") is not None:   # double check, sometimes is_keyboard_shown() raise a false positive
-                        self.interactWithElement()
-                        self.interactWithLastKeyboardButton()
+                    elif searchFields := self.appiumDriver.find_elements(by=AppiumBy.CLASS_NAME, value='XCUIElementTypeSearchField'):
+                        for searchField in searchFields:
+                            self.interactWithTextField(searchField, "search")
                         alreadyInteracted = True
 
                 elif not alreadyInteracted:
@@ -183,9 +187,9 @@ class AppiumModule:
                     if previousRoot is not None and eT.tostring(previousRoot) == eT.tostring(
                             root):
                         if len(accessibleElements) > 1:
-                            print(f"[Appium]: the previous interaction didn't work, removing the element '{accessibleElements[i].value}'")
+                            print(f"[Appium]: the previous interaction didn't work, removing the element '{accessibleElements[previousElementIndex].value}'")
                             self.writeOnFile(
-                                f"[Appium {self.currentTime()}]: the previous interaction didn't work, removing the element '{accessibleElements[i].value}'\n")
+                                f"[Appium {self.currentTime()}]: the previous interaction didn't work, removing the element '{accessibleElements[previousElementIndex].value}'\n")
                             accessibleElements.pop(previousElementIndex)
 
                     if len(accessibleElements) != 0:
