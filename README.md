@@ -1,4 +1,4 @@
-# Automatic Dynamic Analysis on iOS devices
+# Automatic Dynamic Analysis of iOS devices
 ### Bachelor degree thesis, Computer Engineering - Software Platforms and Cybersecurity
 ### University of Genoa
 ## Prerequisites
