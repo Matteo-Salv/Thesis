@@ -1,5 +1,5 @@
 # Automatic Dynamic Analysis of iOS devices
-### Master degree thesis, Computer Engineering - Software Platforms and Cybersecurity
+### Master's degree thesis, Computer Engineering - Software Platforms and Cybersecurity
 ### University of Genoa
 ## Prerequisites
 * macOS device with the following dependencies already installed: 
